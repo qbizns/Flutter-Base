@@ -37,7 +37,11 @@ smartpos_ecosystem/
 │   │   │       ├── auth/          # Auth UI (splash, sign-in, etc.)
 │   │   │       ├── onboarding/    # Onboarding flow
 │   │   │       ├── home_shell/    # Main app shell
-│   │   │       └── profile/       # User profile
+│   │   │       ├── profile/       # User profile
+│   │   │       ├── products/      # Product catalog ✨ NEW
+│   │   │       ├── orders/        # Order management ✨ NEW
+│   │   │       ├── tables/        # Table management ✨ NEW
+│   │   │       └── payments/      # Payment processing ✨ NEW
 │   │   ├── assets/                # Shared assets
 │   │   └── pubspec.yaml
 │   │
@@ -50,9 +54,13 @@ smartpos_ecosystem/
 │   │   │   ├── layout/            # Layout components
 │   │   │   │   ├── pos_scaffold.dart
 │   │   │   │   └── pos_app_bar.dart
-│   │   │   └── widgets/           # Domain widgets
-│   │   │       ├── empty_state_view.dart
-│   │   │       └── error_view.dart
+│   │   │   ├── widgets/           # Shared widgets
+│   │   │   │   ├── empty_state_view.dart
+│   │   │   │   └── error_view.dart
+│   │   │   ├── products/          # Product widgets ✨ NEW
+│   │   │   ├── orders/            # Order/cart widgets ✨ NEW
+│   │   │   ├── tables/            # Table widgets ✨ NEW
+│   │   │   └── payments/          # Payment widgets ✨ NEW
 │   │   └── pubspec.yaml
 │   │
 │   └── device_bridge_client/      # Hardware abstraction ✅ COMPLETE
@@ -89,6 +97,18 @@ Contains:
 - **Theme**: Material 3 theming system
 - **Routing**: go_router integration
 - **Features**: Shared UI features (auth, onboarding, home_shell, profile)
+- **POS Features** ✨ NEW:
+  - **Products**: Product catalog with categories, modifiers, inventory tracking
+  - **Orders**: Order management, shopping cart, order tracking
+  - **Tables**: Table management, zones, floor maps, occupancy tracking
+  - **Payments**: Multi-method payments, refunds, transaction processing
+
+**Architecture**: Clean Architecture with Domain, Data, and Application layers. All features use:
+- Domain entities with business logic
+- Repository pattern with Result<T> error handling
+- Use cases for business operations
+- Riverpod providers for state management
+- Mock data sources for development
 
 **Dependencies**: flutter, riverpod, go_router, dio, shared_preferences, equatable, intl
 
@@ -99,13 +119,17 @@ Contains:
 - **Foundation**: Base components (buttons, cards, text fields)
 - **Layout**: Scaffold, app bar, navigation
 - **Widgets**: Empty states, error views
-- **POS Domain Widgets** (to be added):
-  - Table maps
-  - Product grids
-  - Order/cart views
-  - Payment flows
-  - KDS displays
-  - Kiosk UI
+- **POS Domain Widgets** ✨ NEW:
+  - **Products**: ProductCard, ProductGrid, CategoryChipList, ModifierSelector
+  - **Orders**: CartPanel, OrderCard, OrderItemTile
+  - **Tables**: TableCard, TableGrid, ZoneSelector, TableStatusFilter
+  - **Payments**: PaymentMethodGrid, NumericKeypad, TipSelector, PaymentCard, AmountInput
+
+All widgets are:
+- Material 3 compliant
+- Responsive and adaptive
+- Themeable
+- Reusable across all POS apps
 
 **Dependencies**: flutter, pos_core, riverpod, equatable
 
