@@ -86,5 +86,44 @@ export 'src/features/products/data/sources/products_remote_source.dart';
 export 'src/features/products/application/products_providers.dart';
 
 // Features - Orders
+export 'src/features/orders/domain/entities/cart.dart';
 export 'src/features/orders/domain/entities/order.dart';
 export 'src/features/orders/domain/entities/order_item.dart';
+export 'src/features/orders/domain/repositories/orders_repository.dart';
+export 'src/features/orders/domain/usecases/cancel_order.dart';
+export 'src/features/orders/domain/usecases/create_order.dart';
+export 'src/features/orders/domain/usecases/get_active_orders.dart';
+export 'src/features/orders/domain/usecases/get_order_by_id.dart';
+export 'src/features/orders/domain/usecases/get_orders.dart';
+export 'src/features/orders/domain/usecases/update_order.dart';
+export 'src/features/orders/domain/usecases/update_order_status.dart';
+export 'src/features/orders/data/repositories/orders_repository_impl.dart';
+export 'src/features/orders/data/sources/orders_remote_source.dart';
+export 'src/features/orders/application/orders_providers.dart';
+
+// Features - Tables
+export 'src/features/tables/domain/entities/table.dart';
+export 'src/features/tables/domain/entities/zone.dart';
+export 'src/features/tables/domain/repositories/tables_repository.dart';
+export 'src/features/tables/domain/usecases/assign_order_to_table.dart';
+export 'src/features/tables/domain/usecases/clear_table.dart';
+export 'src/features/tables/domain/usecases/get_available_tables.dart';
+export 'src/features/tables/domain/usecases/get_tables.dart';
+export 'src/features/tables/domain/usecases/get_zones.dart';
+export 'src/features/tables/domain/usecases/update_table_status.dart';
+export 'src/features/tables/data/repositories/tables_repository_impl.dart';
+export 'src/features/tables/data/sources/tables_remote_source.dart';
+export 'src/features/tables/application/tables_providers.dart';
+
+// Features - Payments
+export 'src/features/payments/domain/entities/payment.dart';
+export 'src/features/payments/domain/entities/refund.dart';
+export 'src/features/payments/domain/repositories/payments_repository.dart';
+export 'src/features/payments/domain/usecases/cancel_payment.dart';
+export 'src/features/payments/domain/usecases/get_payments.dart';
+export 'src/features/payments/domain/usecases/get_payments_by_order.dart';
+export 'src/features/payments/domain/usecases/process_payment.dart';
+export 'src/features/payments/domain/usecases/process_refund.dart';
+export 'src/features/payments/data/repositories/payments_repository_impl.dart';
+export 'src/features/payments/data/sources/payments_remote_source.dart';
+export 'src/features/payments/application/payments_providers.dart';
