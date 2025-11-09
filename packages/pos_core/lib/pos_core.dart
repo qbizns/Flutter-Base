@@ -71,3 +71,20 @@ export 'src/features/home_shell/presentation/pages/home_shell_page.dart';
 
 // Features - Profile
 export 'src/features/profile/presentation/pages/profile_page.dart';
+
+// Features - Products
+export 'src/features/products/domain/entities/category.dart';
+export 'src/features/products/domain/entities/modifier.dart';
+export 'src/features/products/domain/entities/product.dart';
+export 'src/features/products/domain/entities/product_price.dart';
+export 'src/features/products/domain/repositories/products_repository.dart';
+export 'src/features/products/domain/usecases/get_categories.dart';
+export 'src/features/products/domain/usecases/get_products.dart';
+export 'src/features/products/domain/usecases/search_products.dart';
+export 'src/features/products/data/repositories/products_repository_impl.dart';
+export 'src/features/products/data/sources/products_remote_source.dart';
+export 'src/features/products/application/products_providers.dart';
+
+// Features - Orders
+export 'src/features/orders/domain/entities/order.dart';
+export 'src/features/orders/domain/entities/order_item.dart';
