@@ -191,6 +191,7 @@ if (config.featureFlags.enableDebugTools) {
 
 **Files**:
 - `config_loader.dart` - Loads config from JSON
+- `config_providers.dart` - Riverpod provider for shared config
 - `app_config_dev.json` - Dev environment config
 - `app_config_staging.json` - Staging environment config
 - `app_config_prod.json` - Production environment config
@@ -202,23 +203,37 @@ if (config.featureFlags.enableDebugTools) {
 - Logging enabled
 - Feature flags
 
-**Usage**:
+**How it works**:
 ```dart
-// Loads config from JSON automatically
-final config = await ConfigLoader.loadConfig(Environment.dev);
+// AppBootstrap automatically loads config from JSON
+await AppBootstrap.run(
+  environment: Environment.dev,
+  appBuilder: (config) => MyApp(config: config),
+);
 
-// Now to rebrand an app:
-// 1. Edit JSON files (no Dart code changes!)
-// 2. Change app name, tagline, API URL
-// 3. Toggle feature flags
-// 4. Done!
+// Config is loaded from assets/config/app_config_dev.json
+// Then provided to all modules via appConfigProvider
+// ApiClient, logger, and all features use this config
+```
+
+**To rebrand an app**:
+```bash
+# 1. Edit JSON files (NO Dart code changes!)
+vi assets/config/app_config_dev.json
+vi assets/config/app_config_staging.json
+vi assets/config/app_config_prod.json
+
+# 2. Change: app name, tagline, API URL, feature flags
+# 3. Done! The app is rebranded!
 ```
 
 **Benefits**:
-- **Zero code changes** to rebrand
+- **TRUE zero code changes** to rebrand
+- Config loaded at bootstrap and shared via Riverpod
 - Non-developers can configure
 - Different settings per environment
 - Easy to version control configurations
+- All modules automatically use the JSON config
 
 ---
 

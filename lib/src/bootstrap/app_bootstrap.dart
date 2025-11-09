@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/config/app_config.dart';
+import '../core/config/config_loader.dart';
+import '../core/config/config_providers.dart';
 import '../core/config/env.dart';
 import '../core/utils/logger.dart';
 
@@ -20,12 +22,14 @@ class AppBootstrap {
     // Set current environment
     currentEnvironment = environment;
 
-    // Create app configuration
-    final config = AppConfig.fromEnvironment(environment);
+    // Load app configuration from JSON
+    // This allows zero-code rebranding - just edit the JSON files!
+    final config = await ConfigLoader.loadConfig(environment);
 
     // Initialize logger
     AppLogger.init(config);
     AppLogger.info('Starting app in ${environment.name} mode');
+    AppLogger.info('Loaded config: ${config.appName}');
 
     // Setup error handlers
     _setupErrorHandlers();
@@ -33,6 +37,10 @@ class AppBootstrap {
     // Run the app with Riverpod
     runApp(
       ProviderScope(
+        overrides: [
+          // Provide the loaded config to all providers
+          appConfigProvider.overrideWithValue(config),
+        ],
         child: appBuilder(config),
       ),
     );
