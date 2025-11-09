@@ -1,0 +1,15 @@
+# Font assets go here
+# Place your custom font files in this directory.
+#
+# The pubspec.yaml is configured to use Inter font family.
+# To use it, download Inter font from https://fonts.google.com/specimen/Inter
+# and place the following files here:
+# - Inter-Regular.ttf (400 weight)
+# - Inter-Medium.ttf (500 weight)
+# - Inter-SemiBold.ttf (600 weight)
+# - Inter-Bold.ttf (700 weight)
+#
+# Alternatively, you can use any font family by updating:
+# 1. The font files in this directory
+# 2. The pubspec.yaml fonts section
+# 3. The _fontFamily constant in lib/src/core/theme/app_typography.dart
