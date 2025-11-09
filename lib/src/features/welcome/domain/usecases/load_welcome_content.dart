@@ -17,10 +17,6 @@ class LoadWelcomeContent {
 
   /// Execute the use case to load welcome content.
   Future<WelcomeMessage> execute() async {
-    try {
-      return await repository.getWelcomeMessage();
-    } catch (e) {
-      rethrow;
-    }
+    return repository.getWelcomeMessage();
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/responsive_layout.dart';
 import '../../application/welcome_controller.dart';
+import '../../domain/entities/welcome_message.dart';
 import '../widgets/welcome_header.dart';
 import '../widgets/welcome_cta_section.dart';
 
@@ -118,7 +119,7 @@ class _MobileLayout extends StatelessWidget {
     required this.controller,
   });
 
-  final dynamic message;
+  final WelcomeMessage message;
   final WelcomeController controller;
 
   @override
@@ -166,7 +167,7 @@ class _TabletLayout extends StatelessWidget {
     required this.controller,
   });
 
-  final dynamic message;
+  final WelcomeMessage message;
   final WelcomeController controller;
 
   @override
@@ -221,7 +222,7 @@ class _DesktopLayout extends StatelessWidget {
     required this.controller,
   });
 
-  final dynamic message;
+  final WelcomeMessage message;
   final WelcomeController controller;
 
   @override

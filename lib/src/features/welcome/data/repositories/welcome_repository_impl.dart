@@ -17,17 +17,11 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
 
   @override
   Future<WelcomeMessage> getWelcomeMessage() async {
-    try {
-      // In a real app, this might:
-      // 1. Try to fetch from remote API
-      // 2. Fall back to cache if offline
-      // 3. Fall back to local default if no cache
-      // For now, we just use the local source
-      return await localSource.getWelcomeMessage();
-    } catch (e) {
-      // In a real app, you might want to handle errors differently
-      // or return a default message
-      rethrow;
-    }
+    // In a real app, this might:
+    // 1. Try to fetch from remote API
+    // 2. Fall back to cache if offline
+    // 3. Fall back to local default if no cache
+    // For now, we just use the local source
+    return localSource.getWelcomeMessage();
   }
 }
