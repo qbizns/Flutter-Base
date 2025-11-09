@@ -1,0 +1,36 @@
+name: device_bridge_client
+description: Hardware abstraction client for SmartPOS device bridge (Go service)
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Core package dependency
+  pos_core:
+    path: ../pos_core
+
+  # Networking (for communicating with device bridge service)
+  dio: ^5.7.0
+
+  # Utilities
+  equatable: ^2.0.5
+  json_annotation: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code Generation
+  json_serializable: ^6.9.2
+
+  # Linting
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

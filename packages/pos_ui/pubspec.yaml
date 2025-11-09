@@ -1,0 +1,32 @@
+name: pos_ui
+description: Unified POS UI component library for SmartPOS ecosystem
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Core package dependency
+  pos_core:
+    path: ../pos_core
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Utilities
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

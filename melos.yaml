@@ -1,0 +1,39 @@
+name: smartpos_ecosystem
+
+packages:
+  - apps/**
+  - packages/**
+
+command:
+  version:
+    # Generate commit links in package changelogs.
+    linkToCommits: true
+
+  bootstrap:
+    # It seems we need this to tell melos to run pub get in all packages
+    runPubGetInParallel: true
+
+scripts:
+  analyze:
+    run: melos exec -- flutter analyze
+    description: Run `flutter analyze` in all packages.
+
+  format:
+    run: melos exec -- dart format . --set-exit-if-changed
+    description: Run `dart format` in all packages.
+
+  test:
+    run: melos exec -- flutter test --no-pub
+    description: Run `flutter test` in all packages.
+
+  build_runner:
+    run: melos exec -- flutter pub run build_runner build --delete-conflicting-outputs
+    description: Run build_runner in all packages.
+
+  clean:
+    run: melos exec -- flutter clean
+    description: Run `flutter clean` in all packages.
+
+  get:
+    run: melos exec -- flutter pub get
+    description: Run `flutter pub get` in all packages.

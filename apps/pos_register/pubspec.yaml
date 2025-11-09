@@ -1,0 +1,43 @@
+name: pos_register
+description: SmartPOS Register App - Main POS terminal application for restaurants and retail
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Local packages
+  pos_core:
+    path: ../../packages/pos_core
+  pos_ui:
+    path: ../../packages/pos_ui
+  device_bridge_client:
+    path: ../../packages/device_bridge_client
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/config/
+
+  # App icons (to be added later)
+  # assets:
+  #   - assets/icons/
+  #   - assets/images/

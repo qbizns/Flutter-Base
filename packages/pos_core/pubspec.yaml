@@ -1,0 +1,52 @@
+name: pos_core
+description: Core business logic, architecture, and shared features for SmartPOS ecosystem
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # Local Storage
+  shared_preferences: ^2.3.3
+
+  # Utilities
+  equatable: ^2.0.5
+  json_annotation: ^4.9.0
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code Generation
+  build_runner: ^2.4.14
+  riverpod_generator: ^2.6.2
+  json_serializable: ^6.9.2
+
+  # Linting
+  flutter_lints: ^5.0.0
+
+  # Testing
+  mockito: ^5.4.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/config/
+    - assets/l10n/

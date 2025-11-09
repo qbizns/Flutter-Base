@@ -1,0 +1,16 @@
+{
+  "appName": "Flutter Starter (Staging)",
+  "appTagline": "Your Production-Ready Flutter Foundation",
+  "apiBaseUrl": "https://api-staging.example.com",
+  "enableLogging": true,
+  "featureFlags": {
+    "enableAnalytics": true,
+    "enableCrashReporting": true,
+    "enablePushNotifications": true,
+    "enableBiometricAuth": true,
+    "enableOfflineMode": true,
+    "enableDebugTools": false,
+    "enablePerformanceMonitoring": true,
+    "enableExperimentalFeatures": false
+  }
+}

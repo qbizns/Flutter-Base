@@ -1,0 +1,45 @@
+{
+  "appName": "SmartPOS Register (Dev)",
+  "appId": "com.smartpos.register",
+  "appType": "register",
+  "posMode": "restaurant",
+  "appTagline": "Complete POS Solution for Restaurants",
+  "apiBaseUrl": "https://api-dev.smartpos.example.com",
+  "realtimeUrl": "wss://realtime-dev.smartpos.example.com",
+  "deviceBridgeUrl": "http://localhost:8080",
+  "enableLogging": true,
+  "featureFlags": {
+    "enableAnalytics": false,
+    "enableCrashReporting": false,
+    "enablePushNotifications": false,
+    "enableBiometricAuth": false,
+    "enableOfflineMode": true,
+    "enableDebugTools": true,
+    "enablePerformanceMonitoring": false,
+    "enableExperimentalFeatures": true,
+    "enableTables": true,
+    "enableKitchenPrinting": true,
+    "enableCashDrawer": true,
+    "enableInventoryModule": false,
+    "enableLoyalty": false,
+    "enableDeviceBridge": true,
+    "enableOnboarding": true
+  },
+  "enabledFeatures": [
+    "auth",
+    "onboarding",
+    "home_shell",
+    "profile",
+    "menu_more",
+    "tables",
+    "orders",
+    "payments",
+    "products"
+  ],
+  "integrations": {
+    "payment": {
+      "provider": "stripe",
+      "apiKey": ""
+    }
+  }
+}

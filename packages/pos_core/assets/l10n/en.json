@@ -1,0 +1,30 @@
+{
+  "appName": "Flutter Starter",
+  "welcome": {
+    "title": "Flutter Starter",
+    "tagline": "Your Production-Ready Flutter Foundation",
+    "description": "Build beautiful, cross-platform applications with this production-grade Flutter starter template. Featuring clean architecture, Material 3 design, and scalable foundation ready for your next big project.",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More"
+  },
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "retry": "Retry"
+  },
+  "errors": {
+    "network": "Network error occurred. Please check your connection.",
+    "server": "Server error occurred. Please try again later.",
+    "unknown": "An unexpected error occurred.",
+    "validation": "Please check your input and try again."
+  }
+}
