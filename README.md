@@ -134,6 +134,8 @@ lib/
             ├── domain/                # Business logic
             │   ├── entities/
             │   │   └── welcome_message.dart
+            │   ├── repositories/
+            │   │   └── welcome_repository.dart
             │   └── usecases/
             │       └── load_welcome_content.dart
             └── data/                  # Data layer
@@ -329,25 +331,28 @@ Follow the welcome feature structure to add new features:
    ├── application/
    ├── domain/
    │   ├── entities/
+   │   ├── repositories/      # Repository interfaces
    │   └── usecases/
    └── data/
-       ├── repositories/
+       ├── repositories/      # Repository implementations
        └── sources/
    ```
 
-2. **Define domain entities** (business models)
+2. **Define domain entities** (business models in `domain/entities/`)
 
-3. **Create use cases** (business logic)
+3. **Define repository interfaces** (contracts in `domain/repositories/`)
 
-4. **Implement data layer** (repositories, data sources)
+4. **Create use cases** (business logic in `domain/usecases/`)
 
-5. **Build application layer** (controllers with Riverpod)
+5. **Implement data layer** (repository implementations in `data/repositories/`, data sources in `data/sources/`)
 
-6. **Create presentation layer** (pages and widgets)
+6. **Build application layer** (controllers with Riverpod)
 
-7. **Add routes** in `lib/src/core/routing/`
+7. **Create presentation layer** (pages and widgets)
 
-8. **Write tests** in `test/` directory
+8. **Add routes** in `lib/src/core/routing/`
+
+9. **Write tests** in `test/` directory
 
 ## 🎨 Customization
 

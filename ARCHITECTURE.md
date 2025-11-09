@@ -153,6 +153,11 @@ class WelcomeMessage extends Equatable {
   final String tagline;
 }
 
+// domain/repositories/welcome_repository.dart
+abstract class WelcomeRepository {
+  Future<WelcomeMessage> getWelcomeMessage();
+}
+
 // domain/usecases/load_welcome_content.dart
 class LoadWelcomeContent {
   const LoadWelcomeContent({required this.repository});
@@ -217,16 +222,17 @@ class WelcomeRepositoryImpl implements WelcomeRepository {
    ├── application/
    ├── domain/
    │   ├── entities/
+   │   ├── repositories/      # Repository interfaces (abstract classes)
    │   └── usecases/
    └── data/
-       ├── repositories/
+       ├── repositories/      # Repository implementations
        └── sources/
    ```
 
 2. **Start with Domain layer**:
-   - Define entities
-   - Create use cases
-   - Define repository interfaces
+   - Define entities in `domain/entities/`
+   - Define repository interfaces in `domain/repositories/`
+   - Create use cases in `domain/usecases/`
 
 3. **Implement Data layer**:
    - Create data sources

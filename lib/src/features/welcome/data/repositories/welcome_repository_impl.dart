@@ -1,14 +1,13 @@
 import '../../domain/entities/welcome_message.dart';
+import '../../domain/repositories/welcome_repository.dart';
 import '../sources/local_welcome_source.dart';
 
-/// Abstract repository interface for welcome feature.
-/// Defines the contract for welcome data operations.
-abstract class WelcomeRepository {
-  Future<WelcomeMessage> getWelcomeMessage();
-}
-
-/// Implementation of WelcomeRepository.
+/// Implementation of [WelcomeRepository] from the domain layer.
 /// Coordinates data sources and transforms data to domain entities.
+///
+/// This class is part of the data layer and depends on the domain layer
+/// interface. It provides the concrete implementation of how to fetch
+/// welcome data, while the domain layer defines what operations are needed.
 class WelcomeRepositoryImpl implements WelcomeRepository {
   const WelcomeRepositoryImpl({
     required this.localSource,

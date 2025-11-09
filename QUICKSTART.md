@@ -137,7 +137,7 @@ You should see the Welcome screen with your changes!
 ### 1. Create a New Feature
 
 ```bash
-mkdir -p lib/src/features/your_feature/{presentation/{pages,widgets},application,domain/{entities,usecases},data/{repositories,sources}}
+mkdir -p lib/src/features/your_feature/{presentation/{pages,widgets},application,domain/{entities,repositories,usecases},data/{repositories,sources}}
 ```
 
 ### 2. Generate Code (After Adding Providers)
