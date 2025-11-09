@@ -1,0 +1,16 @@
+{
+  "appName": "Flutter Starter",
+  "appTagline": "Your Production-Ready Flutter Foundation",
+  "apiBaseUrl": "https://api.example.com",
+  "enableLogging": false,
+  "featureFlags": {
+    "enableAnalytics": true,
+    "enableCrashReporting": true,
+    "enablePushNotifications": true,
+    "enableBiometricAuth": true,
+    "enableOfflineMode": true,
+    "enableDebugTools": false,
+    "enablePerformanceMonitoring": true,
+    "enableExperimentalFeatures": false
+  }
+}

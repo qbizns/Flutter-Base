@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'src/bootstrap/app_bootstrap.dart';
 import 'src/core/config/app_config.dart';
 import 'src/core/config/env.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/core/routing/app_router.dart';
+import 'src/core/l10n/app_localizations.dart';
 
 /// Application entry point.
 /// Initializes the app and runs it in the default environment.
@@ -36,6 +38,14 @@ class MyApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(),
       themeMode: ThemeMode.system,
       routerConfig: router,
+      // Localization
+      localizationsDelegates: const [
+        AppLocalizationsDelegate(),
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       // Additional app-wide configurations
       builder: (context, child) {
         // This is where you can add app-wide overlays,

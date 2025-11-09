@@ -1,4 +1,5 @@
 import 'env.dart';
+import 'feature_flags.dart';
 
 /// Application-wide configuration.
 /// Provides environment-specific settings and constants.
@@ -9,6 +10,7 @@ class AppConfig {
     required this.appTagline,
     this.apiBaseUrl = '',
     this.enableLogging = true,
+    this.featureFlags = const FeatureFlags(),
   });
 
   final Environment environment;
@@ -16,6 +18,7 @@ class AppConfig {
   final String appTagline;
   final String apiBaseUrl;
   final bool enableLogging;
+  final FeatureFlags featureFlags;
 
   /// Development configuration.
   factory AppConfig.dev() => const AppConfig(
