@@ -1,0 +1,25 @@
+{
+  "appName": "SmartPOS Kiosk (Dev)",
+  "appType": "kiosk",
+  "posMode": "restaurant",
+  "enabledFeatures": [
+    "products",
+    "orders",
+    "payments"
+  ],
+  "featureFlags": {
+    "enableMultiLanguage": true,
+    "enableAccessibility": true,
+    "enablePaymentTerminal": true,
+    "showNutritionInfo": false,
+    "enableLoyalty": false,
+    "idleTimeout": 60
+  },
+  "kioskSettings": {
+    "displaySize": "large",
+    "orderType": "takeaway",
+    "autoResetSeconds": 60,
+    "showOrderTracking": true,
+    "languages": ["en", "es", "ar"]
+  }
+}
