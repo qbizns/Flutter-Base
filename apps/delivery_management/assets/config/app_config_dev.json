@@ -1,0 +1,29 @@
+{
+  "appName": "SmartPOS Delivery",
+  "appVersion": "1.0.0",
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:8080/api",
+  "enabledFeatures": {
+    "auth": true,
+    "deliveryTracking": true,
+    "driverManagement": true,
+    "routeOptimization": true,
+    "gpsTracking": false,
+    "notifications": true,
+    "deliveryZones": true,
+    "proofOfDelivery": true
+  },
+  "settings": {
+    "defaultDeliveryFee": 5.00,
+    "freeDeliveryMinimum": 30.00,
+    "maxDeliveryDistance": 10.0,
+    "estimatedDeliveryTime": 30,
+    "autoAssignDrivers": false,
+    "refreshInterval": 5000
+  },
+  "maps": {
+    "apiKey": "",
+    "defaultZoom": 14.0,
+    "enableRealTimeTracking": false
+  }
+}
