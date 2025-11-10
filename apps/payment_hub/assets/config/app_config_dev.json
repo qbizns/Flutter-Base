@@ -1,0 +1,21 @@
+{
+  "appName": "SmartPOS Payment Hub",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "multiProvider": true,
+    "reconciliation": true,
+    "settlements": true,
+    "chargebacks": true,
+    "refunds": true,
+    "analytics": true,
+    "fraudDetection": false,
+    "multiCurrency": true
+  },
+  "providers": {
+    "stripe": true,
+    "square": true,
+    "paypal": false,
+    "clover": false
+  }
+}
