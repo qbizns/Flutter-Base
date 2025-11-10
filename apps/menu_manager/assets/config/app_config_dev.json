@@ -1,0 +1,12 @@
+{
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:3000",
+  "features": {
+    "menuManagement": true,
+    "categoryManagement": true,
+    "modifierManagement": true,
+    "pricingRules": true,
+    "availabilityScheduling": true,
+    "bulkOperations": true
+  }
+}
