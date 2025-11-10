@@ -1,0 +1,38 @@
+{
+  "appName": "SmartPOS Device Management Console",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "deviceInventory": true,
+    "remoteProvisioning": true,
+    "firmwareUpdates": true,
+    "deviceDiagnostics": true,
+    "healthMonitoring": true,
+    "remoteControl": true,
+    "configManagement": true,
+    "alerting": true,
+    "bulkOperations": true,
+    "locationTracking": true
+  },
+  "settings": {
+    "maxDevices": 1000,
+    "healthCheckInterval": 300,
+    "firmwareUpdateWindow": "02:00-04:00",
+    "autoUpdateEnabled": false,
+    "alertThresholds": {
+      "offlineMinutes": 15,
+      "diskUsagePercent": 85,
+      "memoryUsagePercent": 90,
+      "batteryPercent": 20
+    }
+  },
+  "deviceTypes": [
+    "POS Terminal",
+    "Kitchen Display",
+    "Payment Terminal",
+    "Self-Service Kiosk",
+    "Handheld Scanner",
+    "Receipt Printer",
+    "Label Printer"
+  ]
+}
