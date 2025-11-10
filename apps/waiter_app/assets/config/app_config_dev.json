@@ -1,0 +1,25 @@
+{
+  "appName": "SmartPOS Waiter (Dev)",
+  "appType": "waiter",
+  "posMode": "restaurant",
+  "enabledFeatures": [
+    "auth",
+    "tables",
+    "orders",
+    "payments",
+    "products"
+  ],
+  "featureFlags": {
+    "enableTableTransfer": true,
+    "enableOrderSplitting": true,
+    "enableQuickAdd": true,
+    "enableOfflineMode": false,
+    "showKitchenStatus": true
+  },
+  "waiterSettings": {
+    "showTableMap": true,
+    "enableQuickActions": true,
+    "maxActiveOrders": 10,
+    "orderRefreshInterval": 10
+  }
+}
