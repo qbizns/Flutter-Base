@@ -1,0 +1,17 @@
+{
+  "appName": "SmartPOS CRM & Loyalty",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "customerSegmentation": true,
+    "loyaltyProgram": true,
+    "campaignManager": true,
+    "voucherManagement": true,
+    "feedbackTracking": true,
+    "emailCampaigns": true,
+    "smsCampaigns": true,
+    "pushNotifications": true,
+    "birthdayRewards": true,
+    "tierSystem": true
+  }
+}
