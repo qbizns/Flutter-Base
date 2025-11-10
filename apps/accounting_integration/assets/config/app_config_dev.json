@@ -1,0 +1,41 @@
+{
+  "appName": "SmartPOS Accounting Integration",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "quickbooksSync": true,
+    "xeroSync": true,
+    "sageSync": false,
+    "autoSync": true,
+    "realTimeSync": false,
+    "chartOfAccounts": true,
+    "reconciliation": true,
+    "taxReporting": true,
+    "multiCurrency": true,
+    "auditTrail": true,
+    "financialReports": true
+  },
+  "settings": {
+    "syncInterval": 3600,
+    "batchSize": 100,
+    "retentionDays": 365,
+    "autoReconcile": true,
+    "fiscalYearStart": "01-01",
+    "defaultCurrency": "USD",
+    "taxCalculation": "automatic"
+  },
+  "integrations": {
+    "quickbooks": {
+      "enabled": true,
+      "version": "v3",
+      "sandbox": true
+    },
+    "xero": {
+      "enabled": true,
+      "sandbox": true
+    },
+    "sage": {
+      "enabled": false
+    }
+  }
+}
