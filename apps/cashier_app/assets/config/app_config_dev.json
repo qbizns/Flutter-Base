@@ -1,0 +1,12 @@
+{
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:3000",
+  "features": {
+    "cashPayment": true,
+    "cardPayment": true,
+    "splitBill": true,
+    "tipCalculation": true,
+    "receiptPrinting": true,
+    "refunds": true
+  }
+}
