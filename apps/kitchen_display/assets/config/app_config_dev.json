@@ -1,0 +1,49 @@
+{
+  "appName": "SmartPOS Kitchen Display (Dev)",
+  "appType": "kitchen_display",
+  "posMode": "restaurant",
+  "enabledFeatures": [
+    "auth",
+    "orders",
+    "products"
+  ],
+  "featureFlags": {
+    "enableAudioAlerts": true,
+    "enableTimerWarnings": true,
+    "autoRefreshOrders": true,
+    "showOrderPhotos": true,
+    "enablePriorityOrdering": true
+  },
+  "kdsSettings": {
+    "refreshInterval": 5,
+    "warningTimeMinutes": 10,
+    "criticalTimeMinutes": 15,
+    "stations": [
+      {
+        "id": "grill",
+        "name": "Grill Station",
+        "color": "#FF5722"
+      },
+      {
+        "id": "fry",
+        "name": "Fry Station",
+        "color": "#FFC107"
+      },
+      {
+        "id": "salad",
+        "name": "Salad Station",
+        "color": "#4CAF50"
+      },
+      {
+        "id": "dessert",
+        "name": "Dessert Station",
+        "color": "#E91E63"
+      },
+      {
+        "id": "drinks",
+        "name": "Drinks Station",
+        "color": "#2196F3"
+      }
+    ]
+  }
+}
