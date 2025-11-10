@@ -1,0 +1,41 @@
+{
+  "appName": "SmartPOS Queue Management",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "ticketGeneration": true,
+    "digitalDisplay": true,
+    "smsNotification": true,
+    "voiceAnnouncement": true,
+    "multiCounter": true,
+    "priorityQueue": true,
+    "appointmentBooking": true,
+    "analytics": true,
+    "customerFeedback": true,
+    "virtualQueue": true
+  },
+  "settings": {
+    "serviceTypes": [
+      "General Inquiry",
+      "Order Pickup",
+      "Returns",
+      "Technical Support",
+      "Catering Services",
+      "Loyalty Program"
+    ],
+    "serviceCounters": [
+      "Counter 1",
+      "Counter 2",
+      "Counter 3",
+      "Counter 4",
+      "Express Counter"
+    ],
+    "maxWaitTime": 60,
+    "averageServiceTime": 5,
+    "priorityLevels": ["Normal", "Priority", "VIP"],
+    "ticketFormat": "Q{type}-{number}",
+    "autoCallNextTicket": true,
+    "enableSMSNotification": true,
+    "notificationThresholdMinutes": 5
+  }
+}
