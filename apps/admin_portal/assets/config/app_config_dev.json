@@ -1,0 +1,11 @@
+{
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:3000",
+  "features": {
+    "userManagement": true,
+    "roleManagement": true,
+    "auditLogs": true,
+    "systemSettings": true,
+    "databaseBackup": true
+  }
+}
