@@ -1,0 +1,30 @@
+{
+  "appName": "SmartPOS Order Display",
+  "appVersion": "1.0.0",
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:8080/api",
+  "enabledFeatures": {
+    "audio": true,
+    "multiLanguage": true,
+    "animations": true,
+    "autoScroll": true,
+    "notifications": true
+  },
+  "settings": {
+    "defaultLanguage": "en",
+    "supportedLanguages": ["en", "es", "ar", "fr", "zh"],
+    "refreshInterval": 3000,
+    "maxDisplayedOrders": 20,
+    "nowServingCount": 1,
+    "readyOrdersGridColumns": 4,
+    "audioEnabled": true,
+    "audioVolume": 0.8,
+    "theme": "default"
+  },
+  "display": {
+    "showEstimatedTime": true,
+    "showOrderType": true,
+    "animationDuration": 500,
+    "scrollSpeed": 2.0
+  }
+}
