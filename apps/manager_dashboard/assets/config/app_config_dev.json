@@ -1,0 +1,28 @@
+{
+  "appName": "SmartPOS Manager (Dev)",
+  "appType": "manager",
+  "posMode": "restaurant",
+  "enabledFeatures": [
+    "auth",
+    "analytics",
+    "reports",
+    "staff",
+    "inventory",
+    "orders",
+    "products",
+    "tables"
+  ],
+  "featureFlags": {
+    "enableRealtimeUpdates": true,
+    "enableDataExport": true,
+    "enableAdvancedAnalytics": true,
+    "showFinancialData": true,
+    "enableStaffManagement": true
+  },
+  "managerSettings": {
+    "refreshInterval": 30,
+    "retentionDays": 90,
+    "currency": "USD",
+    "timezone": "America/New_York"
+  }
+}
