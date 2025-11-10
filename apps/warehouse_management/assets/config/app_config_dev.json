@@ -1,0 +1,29 @@
+{
+  "appName": "SmartPOS Warehouse Management",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "inventoryTracking": true,
+    "stockTransfers": true,
+    "receiving": true,
+    "distribution": true,
+    "pickingPacking": true,
+    "barcodeScanning": true,
+    "locationManagement": true,
+    "cycleCount": true,
+    "batchTracking": true,
+    "expiryManagement": true
+  },
+  "settings": {
+    "warehouseLocations": [
+      "Central Warehouse",
+      "North Distribution Center",
+      "South Distribution Center"
+    ],
+    "defaultReorderPoint": 50,
+    "defaultReorderQuantity": 200,
+    "lowStockThreshold": 25,
+    "expiryWarningDays": 30,
+    "maxTransferQuantity": 1000
+  }
+}
