@@ -1,0 +1,24 @@
+{
+  "appName": "SmartPOS Online Ordering",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "delivery": true,
+    "pickup": true,
+    "dineIn": true,
+    "guestCheckout": true,
+    "loyaltyIntegration": true,
+    "realTimeTracking": true,
+    "scheduledOrders": true,
+    "groupOrders": false
+  },
+  "payment": {
+    "methods": ["card", "digital_wallet", "cash_on_delivery"],
+    "gateway": "stripe"
+  },
+  "delivery": {
+    "minOrderAmount": 15.00,
+    "deliveryFee": 4.99,
+    "freeDeliveryThreshold": 50.00
+  }
+}
