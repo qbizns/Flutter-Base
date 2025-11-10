@@ -1,0 +1,41 @@
+{
+  "appName": "SmartPOS Notification Center",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "pushNotifications": true,
+    "smsNotifications": true,
+    "emailNotifications": true,
+    "inAppNotifications": true,
+    "notificationHistory": true,
+    "notificationTemplates": true,
+    "bulkNotifications": true,
+    "scheduledNotifications": true,
+    "notificationAnalytics": true
+  },
+  "firebase": {
+    "projectId": "smartpos-dev",
+    "messagingSenderId": "your-sender-id",
+    "androidApiKey": "your-android-api-key",
+    "iosApiKey": "your-ios-api-key"
+  },
+  "twilio": {
+    "accountSid": "your-account-sid",
+    "authToken": "your-auth-token",
+    "fromNumber": "+1234567890"
+  },
+  "sendgrid": {
+    "apiKey": "your-sendgrid-api-key",
+    "fromEmail": "noreply@smartpos.com",
+    "fromName": "SmartPOS"
+  },
+  "notifications": {
+    "maxHistoryDays": 30,
+    "maxBatchSize": 1000,
+    "retryAttempts": 3,
+    "retryDelay": 5000,
+    "enableDoNotDisturb": true,
+    "defaultChannels": ["push", "inApp"],
+    "priorityOverride": true
+  }
+}
