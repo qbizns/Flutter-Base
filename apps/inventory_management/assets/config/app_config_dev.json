@@ -1,0 +1,24 @@
+{
+  "appName": "SmartPOS Inventory",
+  "appVersion": "1.0.0",
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:8080/api",
+  "enabledFeatures": {
+    "auth": true,
+    "inventory": true,
+    "purchaseOrders": true,
+    "suppliers": true,
+    "stockAdjustments": true,
+    "reports": true,
+    "barcodeScanning": false,
+    "notifications": true,
+    "multiLocation": false
+  },
+  "settings": {
+    "lowStockThreshold": 10,
+    "criticalStockThreshold": 5,
+    "autoReorderEnabled": false,
+    "defaultCurrency": "USD",
+    "defaultUnit": "pieces"
+  }
+}
