@@ -1,0 +1,12 @@
+{
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:3000",
+  "features": {
+    "salesAnalytics": true,
+    "productAnalytics": true,
+    "customerInsights": true,
+    "reportGeneration": true,
+    "predictiveAnalytics": true,
+    "exportReports": true
+  }
+}
