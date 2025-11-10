@@ -1,0 +1,22 @@
+{
+  "appName": "SmartPOS Reservations",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "onlineReservations": true,
+    "waitlistManagement": true,
+    "floorLayout": true,
+    "tableAssignment": true,
+    "noShowTracking": true,
+    "depositSystem": false,
+    "guestPreferences": true,
+    "smsNotifications": true,
+    "emailConfirmations": true
+  },
+  "settings": {
+    "maxPartySize": 12,
+    "advanceBookingDays": 30,
+    "reservationDuration": 90,
+    "waitlistTimeout": 15
+  }
+}
