@@ -1,0 +1,14 @@
+{
+  "appName": "SmartPOS Staff",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "scheduling": true,
+    "timeTracking": true,
+    "messaging": true,
+    "announcements": true,
+    "performanceMetrics": true,
+    "shiftSwap": true,
+    "leaveRequests": true
+  }
+}
