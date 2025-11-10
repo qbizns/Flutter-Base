@@ -1,0 +1,32 @@
+{
+  "appName": "SmartPOS",
+  "appVersion": "1.0.0",
+  "environment": "development",
+  "apiBaseUrl": "http://localhost:8080/api",
+  "enabledFeatures": {
+    "auth": true,
+    "guestCheckout": true,
+    "orderTracking": true,
+    "orderHistory": true,
+    "loyaltyProgram": true,
+    "tableReservations": true,
+    "reviews": true,
+    "pushNotifications": true,
+    "savedPayments": true,
+    "favorites": true
+  },
+  "settings": {
+    "defaultCurrency": "USD",
+    "supportedLanguages": ["en", "es"],
+    "taxRate": 0.08,
+    "deliveryFee": 5.00,
+    "freeDeliveryMinimum": 30.00,
+    "loyaltyPointsPerDollar": 10,
+    "pointsRedemptionRate": 100
+  },
+  "ui": {
+    "showPromotions": true,
+    "enableAnimations": true,
+    "defaultTheme": "light"
+  }
+}
