@@ -4,6 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_core/pos_core.dart';
 import '../../../widgets/kds_order_card.dart';
 import '../../../widgets/station_selector.dart';
+import '../../providers/bumped_orders_provider.dart';
+import '../../providers/kds_settings_provider.dart';
+import '../../services/audio_alert_service.dart';
+import 'kds_metrics_page.dart';
+import 'recall_orders_page.dart';
 
 /// KDS Main Page - Real-time kitchen order display
 ///
@@ -62,11 +67,20 @@ class _KdsMainPageState extends ConsumerState<KdsMainPage> {
       status: OrderStatus.preparing, // In real app, might want multiple statuses
     ));
 
+    final bumpedOrders = ref.watch(bumpedOrdersProvider);
+    final settings = ref.watch(kdsSettingsProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kitchen Display'),
         centerTitle: true,
         actions: [
+          // Performance metrics button
+          IconButton(
+            icon: const Icon(Icons.analytics_outlined),
+            onPressed: () => _showMetrics(context),
+            tooltip: 'Performance',
+          ),
           // Manual refresh button
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -81,6 +95,13 @@ class _KdsMainPageState extends ConsumerState<KdsMainPage> {
           ),
         ],
       ),
+      floatingActionButton: bumpedOrders.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: () => _showRecallOrders(context),
+              icon: const Icon(Icons.history),
+              label: Text('Recall (${bumpedOrders.length})'),
+            )
+          : null,
       body: Column(
         children: [
           // Station selector
@@ -251,6 +272,12 @@ class _KdsMainPageState extends ConsumerState<KdsMainPage> {
     await result.when(
       success: (_) {
         if (context.mounted) {
+          // Add to bumped orders list
+          ref.read(bumpedOrdersProvider.notifier).addBumpedOrder(order);
+
+          // Play completion sound
+          audioAlertService.playOrderCompleteSound();
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Order #${order.orderNumber} marked as ready'),
@@ -276,6 +303,24 @@ class _KdsMainPageState extends ConsumerState<KdsMainPage> {
     );
   }
 
+  void _showRecallOrders(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const RecallOrdersPage(),
+      ),
+    );
+  }
+
+  void _showMetrics(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const KdsMetricsPage(),
+      ),
+    );
+  }
+
   void _showOrderDetails(BuildContext context, Order order) {
     showModalBottomSheet(
       context: context,
@@ -298,41 +343,125 @@ class _KdsMainPageState extends ConsumerState<KdsMainPage> {
   void _showSettings(BuildContext context) {
     showDialog(
       context: context,
+      builder: (context) => Consumer(
+        builder: (context, ref, child) {
+          final settings = ref.watch(kdsSettingsProvider);
+
+          return AlertDialog(
+            title: const Text('KDS Settings'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SwitchListTile(
+                  title: const Text('Audio Alerts'),
+                  subtitle: const Text('Play sound for new orders'),
+                  value: settings.audioAlertsEnabled,
+                  onChanged: (value) {
+                    ref.read(kdsSettingsProvider.notifier).updateAudioAlerts(value);
+                    audioAlertService.setEnabled(value);
+                  },
+                ),
+                SwitchListTile(
+                  title: const Text('Auto Refresh'),
+                  subtitle: const Text('Refresh orders automatically'),
+                  value: settings.autoRefreshEnabled,
+                  onChanged: (value) {
+                    ref.read(kdsSettingsProvider.notifier).updateAutoRefresh(value);
+                    // Restart timer if needed
+                    if (value) {
+                      _refreshTimer?.cancel();
+                      _startAutoRefresh();
+                    } else {
+                      _refreshTimer?.cancel();
+                    }
+                  },
+                ),
+                ListTile(
+                  title: const Text('Warning Time'),
+                  subtitle: Text('${settings.warningTimeMinutes} minutes'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showWarningTimePicker(context, settings.warningTimeMinutes),
+                ),
+                ListTile(
+                  title: const Text('Critical Time'),
+                  subtitle: Text('${settings.criticalTimeMinutes} minutes'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _showCriticalTimePicker(context, settings.criticalTimeMinutes),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _showWarningTimePicker(BuildContext context, int currentValue) {
+    showDialog(
+      context: context,
       builder: (context) => AlertDialog(
-        title: const Text('KDS Settings'),
+        title: const Text('Warning Time'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SwitchListTile(
-              title: const Text('Audio Alerts'),
-              subtitle: const Text('Play sound for new orders'),
-              value: true,
-              onChanged: (value) {
-                // TODO: Implement settings
-              },
-            ),
-            SwitchListTile(
-              title: const Text('Auto Refresh'),
-              subtitle: const Text('Refresh orders every 5 seconds'),
-              value: true,
-              onChanged: (value) {
-                // TODO: Implement settings
-              },
-            ),
-            ListTile(
-              title: const Text('Warning Time'),
-              subtitle: const Text('10 minutes'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // TODO: Implement settings
-              },
-            ),
+            const Text('Show warning color after:'),
+            const SizedBox(height: 16),
+            ...[ 5, 8, 10, 12, 15].map((minutes) => RadioListTile<int>(
+                  title: Text('$minutes minutes'),
+                  value: minutes,
+                  groupValue: currentValue,
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(kdsSettingsProvider.notifier).updateWarningTime(value);
+                      Navigator.pop(context);
+                    }
+                  },
+                )),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCriticalTimePicker(BuildContext context, int currentValue) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Critical Time'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Show critical color after:'),
+            const SizedBox(height: 16),
+            ...[12, 15, 20, 25, 30].map((minutes) => RadioListTile<int>(
+                  title: Text('$minutes minutes'),
+                  value: minutes,
+                  groupValue: currentValue,
+                  onChanged: (value) {
+                    if (value != null) {
+                      ref.read(kdsSettingsProvider.notifier).updateCriticalTime(value);
+                      Navigator.pop(context);
+                    }
+                  },
+                )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
         ],
       ),
