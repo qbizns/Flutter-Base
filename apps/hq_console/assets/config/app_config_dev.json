@@ -1,0 +1,27 @@
+{
+  "appName": "SmartPOS HQ Console",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "multiStoreManagement": true,
+    "performanceAnalytics": true,
+    "staffManagement": true,
+    "inventoryVisibility": true,
+    "salesComparison": true,
+    "systemConfiguration": true,
+    "roleBasedAccess": true,
+    "auditLogs": true,
+    "backupRestore": true,
+    "integrationManagement": true
+  },
+  "settings": {
+    "maxStores": 100,
+    "dataRetentionDays": 365,
+    "reportRefreshInterval": 300,
+    "alertThresholds": {
+      "lowStock": 10,
+      "salesDrop": 20,
+      "staffAbsence": 3
+    }
+  }
+}
