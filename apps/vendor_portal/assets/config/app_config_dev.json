@@ -1,0 +1,31 @@
+{
+  "appName": "SmartPOS Vendor Portal",
+  "environment": "development",
+  "apiBaseUrl": "https://dev-api.smartpos.com",
+  "features": {
+    "vendorManagement": true,
+    "purchaseOrders": true,
+    "invoiceTracking": true,
+    "productCatalog": true,
+    "vendorMessaging": true,
+    "paymentTracking": true,
+    "performanceReports": true,
+    "contractManagement": true,
+    "qualityAssurance": true,
+    "autoReordering": true
+  },
+  "settings": {
+    "maxVendors": 500,
+    "poApprovalRequired": true,
+    "autoPoNumber": true,
+    "paymentTerms": [
+      "Net 30",
+      "Net 60",
+      "COD",
+      "2/10 Net 30"
+    ],
+    "defaultCurrency": "USD",
+    "minOrderValue": 100.00,
+    "reorderThreshold": 10
+  }
+}
