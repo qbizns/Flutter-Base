@@ -44,6 +44,12 @@ export 'src/core/theme/app_sizes.dart';
 export 'src/core/theme/app_theme.dart';
 export 'src/core/theme/app_typography.dart';
 
+// Vodo Design System (New Theme)
+export 'src/theme/vodo_colors.dart';
+export 'src/theme/vodo_text_styles.dart';
+export 'src/theme/vodo_dimensions.dart';
+export 'src/theme/vodo_theme.dart';
+
 // Core - Routing
 export 'src/core/routing/app_router.dart';
 export 'src/core/routing/routes.dart';
