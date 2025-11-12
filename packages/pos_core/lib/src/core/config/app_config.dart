@@ -9,6 +9,8 @@ class AppConfig {
     required this.appName,
     required this.appTagline,
     this.apiBaseUrl = '',
+    this.deviceBridgeUrl = '',
+    this.deviceBridgeWebSocketUrl = '',
     this.enableLogging = true,
     this.featureFlags = const FeatureFlags(),
   });
@@ -17,15 +19,19 @@ class AppConfig {
   final String appName;
   final String appTagline;
   final String apiBaseUrl;
+  final String deviceBridgeUrl;
+  final String deviceBridgeWebSocketUrl;
   final bool enableLogging;
   final FeatureFlags featureFlags;
 
   /// Development configuration.
   factory AppConfig.dev() => const AppConfig(
         environment: Environment.dev,
-        appName: 'Flutter Starter (Dev)',
-        appTagline: 'Your Production-Ready Flutter Foundation',
-        apiBaseUrl: 'https://api-dev.example.com',
+        appName: 'SmartPOS (Dev)',
+        appTagline: 'Complete POS System',
+        apiBaseUrl: 'http://localhost:3000/api/v1',
+        deviceBridgeUrl: 'http://localhost:8080',
+        deviceBridgeWebSocketUrl: 'ws://localhost:8080/v1/events',
         enableLogging: true,
       );
 
@@ -41,9 +47,11 @@ class AppConfig {
   /// Production configuration.
   factory AppConfig.prod() => const AppConfig(
         environment: Environment.prod,
-        appName: 'Flutter Starter',
-        appTagline: 'Your Production-Ready Flutter Foundation',
-        apiBaseUrl: 'https://api.example.com',
+        appName: 'SmartPOS',
+        appTagline: 'Complete POS System',
+        apiBaseUrl: 'https://api.smartpos.com/api/v1',
+        deviceBridgeUrl: 'https://devices.smartpos.com',
+        deviceBridgeWebSocketUrl: 'wss://devices.smartpos.com/v1/events',
         enableLogging: false,
       );
 
