@@ -6,6 +6,7 @@ import 'package:pos_core/pos_core.dart';
 import 'src/features/dashboard/presentation/pages/dashboard_home_page.dart';
 import 'src/features/monitoring/presentation/pages/monitoring_page.dart';
 import 'src/features/products/presentation/pages/products_page.dart';
+import 'src/features/restaurant/presentation/pages/restaurant_page.dart';
 import 'src/features/sales/presentation/pages/sales_page.dart';
 import 'src/features/staff/presentation/pages/staff_page.dart';
 import 'src/ui/theme/odoo_theme.dart';
@@ -78,14 +79,10 @@ final _router = GoRouter(
           builder: (context, state) => const ProductsPage(),
         ),
 
-        // Restaurant management (NEW)
+        // Restaurant management
         GoRoute(
           path: '/restaurant',
-          builder: (context, state) => const _PlaceholderPage(
-            title: 'Restaurant Management',
-            subtitle: 'Floor plans, tables, and reservations',
-            icon: Icons.restaurant_outlined,
-          ),
+          builder: (context, state) => const RestaurantPage(),
         ),
 
         // Staff management
