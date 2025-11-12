@@ -27,6 +27,9 @@ dependencies:
   # Navigation
   go_router: ^14.6.2
 
+  # WebSocket
+  web_socket_channel: ^2.4.0
+
   # Offline Storage
   drift: ^2.14.0
   drift_flutter: ^0.1.0
