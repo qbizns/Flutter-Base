@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 
-import 'src/features/kds/presentation/pages/kds_display_page.dart';
+import 'src/features/kds/presentation/pages/kds_display_page_enhanced.dart';
+import 'src/features/analytics/presentation/pages/analytics_dashboard_page.dart';
 
 void main() {
   // Run app in development environment
@@ -45,7 +46,11 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const KdsDisplayPage(),
+      builder: (context, state) => const KdsDisplayPageEnhanced(),
+    ),
+    GoRoute(
+      path: '/analytics',
+      builder: (context, state) => const AnalyticsDashboardPage(),
     ),
   ],
 );
