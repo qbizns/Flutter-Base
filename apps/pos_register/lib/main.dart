@@ -6,6 +6,7 @@ import 'package:pos_core/pos_core.dart';
 import 'src/features/checkout/presentation/pages/checkout_page.dart';
 import 'src/features/more/presentation/pages/more_page.dart';
 import 'src/features/orders/presentation/pages/orders_page.dart';
+import 'src/features/payment/presentation/pages/payment_page.dart';
 import 'src/features/pos/presentation/pages/main_pos_page.dart';
 import 'src/features/session/presentation/pages/session_open_page.dart';
 import 'src/features/session/presentation/pages/session_close_page.dart';
@@ -98,6 +99,11 @@ final _router = GoRouter(
     GoRoute(
       path: '/checkout',
       builder: (context, state) => const CheckoutPage(),
+    ),
+    // Payment Route (outside of shell)
+    GoRoute(
+      path: '/payment',
+      builder: (context, state) => const PaymentPage(),
     ),
     // Session Management Routes (outside of shell)
     GoRoute(

@@ -140,7 +140,7 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
                     onItemRemoved: (item) {
                       ref.read(cartNotifierProvider.notifier).removeItem(item.id);
                     },
-                    onCheckout: () => context.push('/checkout'),
+                    onCheckout: () => context.push('/payment'),
                     onClear: () {
                       ref.read(cartNotifierProvider.notifier).clear();
                     },
@@ -157,9 +157,9 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       floatingActionButton: cart.isNotEmpty &&
               MediaQuery.of(context).size.width < 900
           ? FloatingActionButton.extended(
-              onPressed: () => context.push('/checkout'),
-              icon: const Icon(Icons.shopping_cart_checkout),
-              label: Text('Checkout - \$${cart.total.toStringAsFixed(2)}'),
+              onPressed: () => context.push('/payment'),
+              icon: const Icon(Icons.payment),
+              label: Text('Pay - \$${cart.total.toStringAsFixed(2)}'),
             )
           : null,
     );
