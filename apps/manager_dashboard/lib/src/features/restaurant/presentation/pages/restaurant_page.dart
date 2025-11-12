@@ -3,33 +3,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../ui/theme/odoo_colors.dart';
 import '../../../../ui/theme/odoo_typography.dart';
-import '../widgets/team_members_view.dart';
-import '../widgets/roles_permissions_view.dart';
-import '../widgets/shift_schedule_view.dart';
-import '../widgets/activity_logs_view.dart';
+import '../widgets/floor_plan_view.dart';
+import '../widgets/tables_list_view.dart';
+import '../widgets/kitchen_stations_view.dart';
 
-/// Staff Management Page - Comprehensive employee management
+/// Restaurant Page - Comprehensive restaurant management
 ///
 /// Features:
-/// - Team members management (CRUD)
-/// - Roles and permissions matrix
-/// - Shift scheduling and assignments
-/// - Activity logs and audit trail
-class StaffPage extends ConsumerStatefulWidget {
-  const StaffPage({super.key});
+/// - Floor plan designer with drag-drop tables
+/// - Table management (add, edit, delete)
+/// - Table status overview
+/// - Kitchen stations configuration
+/// - Reservations calendar
+class RestaurantPage extends ConsumerStatefulWidget {
+  const RestaurantPage({super.key});
 
   @override
-  ConsumerState<StaffPage> createState() => _StaffPageState();
+  ConsumerState<RestaurantPage> createState() => _RestaurantPageState();
 }
 
-class _StaffPageState extends ConsumerState<StaffPage>
+class _RestaurantPageState extends ConsumerState<RestaurantPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -61,20 +61,16 @@ class _StaffPageState extends ConsumerState<StaffPage>
               ),
               tabs: const [
                 Tab(
-                  icon: Icon(Icons.people),
-                  text: 'Team Members',
+                  icon: Icon(Icons.grid_on),
+                  text: 'Floor Plan',
                 ),
                 Tab(
-                  icon: Icon(Icons.admin_panel_settings),
-                  text: 'Roles & Permissions',
+                  icon: Icon(Icons.table_restaurant),
+                  text: 'Tables',
                 ),
                 Tab(
-                  icon: Icon(Icons.calendar_month),
-                  text: 'Shift Schedule',
-                ),
-                Tab(
-                  icon: Icon(Icons.history),
-                  text: 'Activity Logs',
+                  icon: Icon(Icons.kitchen),
+                  text: 'Kitchen Stations',
                 ),
               ],
             ),
@@ -85,10 +81,9 @@ class _StaffPageState extends ConsumerState<StaffPage>
             child: TabBarView(
               controller: _tabController,
               children: const [
-                TeamMembersView(),
-                RolesPermissionsView(),
-                ShiftScheduleView(),
-                ActivityLogsView(),
+                FloorPlanView(),
+                TablesListView(),
+                KitchenStationsView(),
               ],
             ),
           ),
@@ -115,7 +110,7 @@ class _StaffPageState extends ConsumerState<StaffPage>
       child: Row(
         children: [
           Icon(
-            Icons.people,
+            Icons.restaurant,
             size: OdooIconSizes.xl,
             color: OdooColors.primary,
           ),
@@ -124,13 +119,13 @@ class _StaffPageState extends ConsumerState<StaffPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Staff Management',
+                'Restaurant Management',
                 style: OdooTypography.pageTitle.copyWith(
                   color: OdooColors.textPrimary,
                 ),
               ),
               Text(
-                'Manage team members, roles, and schedules',
+                'Manage floor plan, tables, and kitchen stations',
                 style: OdooTypography.bodySmall.copyWith(
                   color: OdooColors.textSecondary,
                 ),
@@ -140,23 +135,23 @@ class _StaffPageState extends ConsumerState<StaffPage>
           const Spacer(),
           // Quick Stats
           _buildQuickStat(
-            icon: Icons.people,
-            label: 'Team',
-            value: '24',
+            icon: Icons.table_restaurant,
+            label: 'Tables',
+            value: '15',
             color: OdooColors.primary,
           ),
           const SizedBox(width: OdooSpacing.xl),
           _buildQuickStat(
-            icon: Icons.check_circle,
-            label: 'Active',
-            value: '20',
+            icon: Icons.event_seat,
+            label: 'Available',
+            value: '8',
             color: OdooColors.success,
           ),
           const SizedBox(width: OdooSpacing.xl),
           _buildQuickStat(
-            icon: Icons.event_available,
-            label: 'On Duty',
-            value: '12',
+            icon: Icons.kitchen,
+            label: 'Stations',
+            value: '4',
             color: OdooColors.secondary,
           ),
         ],

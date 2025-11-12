@@ -23,8 +23,24 @@ dependencies:
   # Navigation
   go_router: ^14.6.2
 
+  # Charts & Data Visualization
+  fl_chart: ^0.69.0                        # Simple, customizable charts
+  syncfusion_flutter_charts: ^27.1.48      # Advanced charts (optional)
+
+  # Data Tables
+  data_table_2: ^2.5.15                    # Enhanced data tables
+
+  # File & Image Pickers
+  file_picker: ^8.1.2                      # File upload
+  image_picker: ^1.1.2                     # Image upload
+  flutter_colorpicker: ^1.1.0              # Color picker for customization
+
   # Additional dependencies
-  intl: ^0.19.0  # For currency and date formatting
+  intl: ^0.19.0                            # Currency and date formatting
+  csv: ^6.0.0                              # CSV export
+  pdf: ^3.11.1                             # PDF generation
+  path_provider: ^2.1.4                    # File system paths
+  printing: ^5.13.2                        # PDF printing and sharing
 
 dev_dependencies:
   flutter_test:
