@@ -1,6 +1,6 @@
 {
-  "appName": "Flutter Starter",
-  "appTagline": "Your Production-Ready Flutter Foundation",
+  "appName": "SmartPOS",
+  "appTagline": "Complete POS System",
   "apiBaseUrl": "https://api.smartpos.com/api/v1",
   "deviceBridgeUrl": "https://devices.smartpos.com",
   "deviceBridgeWebSocketUrl": "wss://devices.smartpos.com/v1/events",

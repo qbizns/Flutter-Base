@@ -13,7 +13,7 @@ import 'src/features/tables/presentation/pages/tables_page.dart';
 void main() {
   // Run app in development environment
   AppBootstrap.run(
-    environment: Environment.development,
+    environment: Environment.dev,
     appBuilder: (config) => const ProviderScope(
       child: PosRegisterApp(),
     ),

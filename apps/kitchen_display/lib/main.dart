@@ -7,7 +7,7 @@ import 'src/features/kds/presentation/pages/kds_main_page.dart';
 void main() {
   // Run app in development environment
   AppBootstrap.run(
-    environment: Environment.development,
+    environment: Environment.dev,
     appBuilder: (config) => const ProviderScope(
       child: KitchenDisplayApp(),
     ),

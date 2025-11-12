@@ -10,7 +10,7 @@ import 'src/features/tables/presentation/pages/table_selection_page.dart';
 void main() {
   // Run app in development environment
   AppBootstrap.run(
-    environment: Environment.development,
+    environment: Environment.dev,
     appBuilder: (config) => const ProviderScope(
       child: WaiterApp(),
     ),

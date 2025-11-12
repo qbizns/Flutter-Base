@@ -38,9 +38,11 @@ class AppConfig {
   /// Staging configuration.
   factory AppConfig.staging() => const AppConfig(
         environment: Environment.staging,
-        appName: 'Flutter Starter (Staging)',
-        appTagline: 'Your Production-Ready Flutter Foundation',
-        apiBaseUrl: 'https://api-staging.example.com',
+        appName: 'SmartPOS (Staging)',
+        appTagline: 'Complete POS System',
+        apiBaseUrl: 'https://api-staging.smartpos.com/api/v1',
+        deviceBridgeUrl: 'https://devices-staging.smartpos.com',
+        deviceBridgeWebSocketUrl: 'wss://devices-staging.smartpos.com/v1/events',
         enableLogging: true,
       );
 
