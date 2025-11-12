@@ -6,6 +6,9 @@ import 'package:pos_ui/pos_ui.dart';
 
 import '../../../session/presentation/widgets/session_status_bar.dart';
 import '../../../session/presentation/widgets/session_guard.dart';
+import '../widgets/vodo_product_grid.dart';
+import '../widgets/product_search_bar.dart';
+import '../widgets/vodo_cart_panel.dart';
 
 /// Main POS screen with product grid and cart
 class MainPosPage extends ConsumerStatefulWidget {
@@ -17,6 +20,7 @@ class MainPosPage extends ConsumerStatefulWidget {
 
 class _MainPosPageState extends ConsumerState<MainPosPage> {
   String? _selectedCategoryId;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +29,21 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       categoryId: _selectedCategoryId,
     ));
     final cart = ref.watch(cartNotifierProvider);
+
+    // Filter products by search query
+    final filteredProducts = productsAsync.when(
+      data: (products) {
+        if (_searchQuery.isEmpty) return products;
+        final query = _searchQuery.toLowerCase();
+        return products.where((product) {
+          return product.name.toLowerCase().contains(query) ||
+              product.sku.toLowerCase().contains(query) ||
+              (product.barcode?.toLowerCase().contains(query) ?? false);
+        }).toList();
+      },
+      loading: () => <Product>[],
+      error: (_, __) => <Product>[],
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -61,6 +80,16 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
                     // Session Status Bar (Odoo-style)
                     const SessionStatusBar(),
 
+                    // Product Search Bar (Vodo-style)
+                    ProductSearchBar(
+                      onSearchChanged: (query) {
+                        setState(() => _searchQuery = query);
+                      },
+                      onBarcodeScan: _handleBarcodeScan,
+                      resultCount: _searchQuery.isNotEmpty ? filteredProducts.length : null,
+                      initialQuery: _searchQuery,
+                    ),
+
                     // Categories
                     categoriesAsync.when(
                       data: (categories) => CategoryChipList(
@@ -76,12 +105,13 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
                       error: (_, __) => const SizedBox(height: 48),
                     ),
 
-                    // Products Grid
+                    // Products Grid (Vodo-style)
                     Expanded(
                       child: productsAsync.when(
-                        data: (products) => ProductGrid(
-                          products: products,
+                        data: (_) => ResponsiveVodoProductGrid(
+                          products: filteredProducts,
                           onProductTap: (product) => _addToCart(product),
+                          showStock: true,
                         ),
                         loading: () => const Center(
                           child: CircularProgressIndicator(),
@@ -95,11 +125,11 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
                 ),
               ),
 
-              // Cart Panel (Desktop only)
+              // Cart Panel (Desktop only) - Vodo-style
               if (isDesktop)
                 SizedBox(
                   width: 400,
-                  child: CartPanel(
+                  child: VodoCartPanel(
                     cart: cart,
                     onItemQuantityChanged: (item, quantity) {
                       ref.read(cartNotifierProvider.notifier).updateItemQuantity(
@@ -114,6 +144,9 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
                     onClear: () {
                       ref.read(cartNotifierProvider.notifier).clear();
                     },
+                    onCustomerSelect: () => _showCustomerSelect(context),
+                    onNotesAdd: () => _showNotesDialog(context),
+                    onDiscountApply: () => _showDiscountDialog(context),
                   ),
                 ),
             ],
@@ -184,7 +217,7 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) => CartPanel(
+        builder: (context, scrollController) => VodoCartPanel(
           cart: ref.read(cartNotifierProvider),
           onItemQuantityChanged: (item, quantity) {
             ref.read(cartNotifierProvider.notifier).updateItemQuantity(
@@ -202,7 +235,52 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
           onClear: () {
             ref.read(cartNotifierProvider.notifier).clear();
           },
+          onCustomerSelect: () => _showCustomerSelect(context),
+          onNotesAdd: () => _showNotesDialog(context),
+          onDiscountApply: () => _showDiscountDialog(context),
         ),
+      ),
+    );
+  }
+
+  void _handleBarcodeScan() {
+    // TODO: Implement barcode scanning with Device Bridge (Day 4-5)
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Barcode scanning will be implemented in Day 4-5'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _showCustomerSelect(BuildContext context) {
+    // TODO: Implement customer selection dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Customer selection coming soon'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _showNotesDialog(BuildContext context) {
+    // TODO: Implement order notes dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Order notes coming soon'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _showDiscountDialog(BuildContext context) {
+    // TODO: Implement discount dialog
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Discount feature coming soon'),
+        duration: Duration(seconds: 1),
       ),
     );
   }
