@@ -6,6 +6,7 @@ import 'package:pos_ui/pos_ui.dart';
 
 import '../../../session/presentation/widgets/session_status_bar.dart';
 import '../../../session/presentation/widgets/session_guard.dart';
+import '../../../sync/presentation/widgets/sync_status_indicator.dart';
 import '../widgets/vodo_product_grid.dart';
 import '../widgets/product_search_bar.dart';
 import '../widgets/vodo_cart_panel.dart';
@@ -49,6 +50,11 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       appBar: AppBar(
         title: const Text('POS Register'),
         actions: [
+          // Sync status indicator
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.0),
+            child: Center(child: SyncStatusIndicator()),
+          ),
           if (cart.isNotEmpty)
             IconButton(
               icon: Badge(

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 import '../../../session/presentation/widgets/session_guard.dart';
+import '../../../data/services/sync_service.dart';
 import '../widgets/vodo_payment_grid.dart';
 import '../widgets/cash_payment_dialog.dart';
 
@@ -497,22 +498,60 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     setState(() => _isProcessing = true);
 
     try {
-      // TODO: Create order with payment information
-      // This will be integrated with backend API
+      final syncService = ref.read(syncServiceProvider);
+      final syncState = syncService.currentState;
 
-      await Future.delayed(const Duration(seconds: 1)); // Simulated API call
+      // Generate order number
+      final orderNumber = 'ORD-${DateTime.now().millisecondsSinceEpoch}';
+
+      // Convert payment lines to map
+      final paymentLinesData = _paymentLines.map((line) => {
+        'method_id': line.method.id,
+        'method_name': line.method.name,
+        'amount': line.amount,
+        'reference': line.reference,
+      }).toList();
+
+      // Get session info (mock for now - should come from session provider)
+      const sessionId = 'session-1';
+      const cashierId = 'cashier-1';
+      const cashierName = 'John Doe';
+
+      // Save order offline
+      final orderId = await syncService.saveOrderOffline(
+        orderNumber: orderNumber,
+        sessionId: sessionId,
+        cashierId: cashierId,
+        cashierName: cashierName,
+        items: _cart.items,
+        paymentLines: paymentLinesData,
+        notes: 'POS Order',
+      );
 
       if (!mounted) return;
 
       // Clear cart
       ref.read(cartNotifierProvider.notifier).clear();
 
-      // Show success and navigate
+      // Show success message based on sync status
+      final message = syncState.isOnline
+          ? 'Order completed successfully!'
+          : 'Order saved offline. Will sync when online.';
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Order completed successfully!'),
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                syncState.isOnline ? Icons.check_circle : Icons.cloud_off,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(message)),
+            ],
+          ),
           backgroundColor: VodoColors.success,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 3),
         ),
       );
 
