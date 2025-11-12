@@ -5,6 +5,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 
 import '../../../../data/models/kitchen_order.dart';
@@ -277,9 +278,17 @@ class _KdsDisplayPageEnhancedState
 
                 const SizedBox(width: VodoDimensions.spacingSm),
 
+                // Analytics button
+                IconButton(
+                  onPressed: () => context.push('/analytics'),
+                  icon: const Icon(Icons.analytics),
+                  color: VodoColors.textOnPrimary,
+                  tooltip: 'Analytics',
+                ),
+
                 // Settings button
                 IconButton(
-                  onPressed: () => _showSettings(),
+                  onPressed: () => context.push('/settings'),
                   icon: const Icon(Icons.settings),
                   color: VodoColors.textOnPrimary,
                   tooltip: 'Settings',
@@ -523,134 +532,4 @@ class _KdsDisplayPageEnhancedState
     );
   }
 
-  void _showSettings() {
-    showDialog(
-      context: context,
-      builder: (context) => _SettingsDialog(
-        showCompleted: _showCompletedOrders,
-        onShowCompletedChanged: (value) {
-          setState(() {
-            _showCompletedOrders = value;
-          });
-        },
-      ),
-    );
-  }
-}
-
-/// Settings dialog
-class _SettingsDialog extends ConsumerWidget {
-  final bool showCompleted;
-  final ValueChanged<bool> onShowCompletedChanged;
-
-  const _SettingsDialog({
-    required this.showCompleted,
-    required this.onShowCompletedChanged,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final soundSettings = ref.watch(soundSettingsNotifierProvider);
-
-    return AlertDialog(
-      title: const Text('KDS Settings'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Display settings
-            Text(
-              'Display',
-              style: VodoTextStyles.titleMedium.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: VodoDimensions.spacingSm),
-            SwitchListTile(
-              title: const Text('Show Completed Orders'),
-              value: showCompleted,
-              onChanged: (value) {
-                onShowCompletedChanged(value);
-                Navigator.pop(context);
-              },
-            ),
-
-            const Divider(),
-            const SizedBox(height: VodoDimensions.spacingSm),
-
-            // Sound settings
-            Text(
-              'Sound Notifications',
-              style: VodoTextStyles.titleMedium.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: VodoDimensions.spacingSm),
-            SwitchListTile(
-              title: const Text('Enable Sounds'),
-              value: soundSettings.enabled,
-              onChanged: (value) {
-                ref
-                    .read(soundSettingsNotifierProvider.notifier)
-                    .setEnabled(value);
-              },
-            ),
-            ListTile(
-              title: const Text('Volume'),
-              subtitle: Slider(
-                value: soundSettings.volume,
-                onChanged: soundSettings.enabled
-                    ? (value) {
-                        ref
-                            .read(soundSettingsNotifierProvider.notifier)
-                            .setVolume(value);
-                      }
-                    : null,
-              ),
-            ),
-            CheckboxListTile(
-              title: const Text('Normal Orders'),
-              value: soundSettings.playForNormalOrders,
-              onChanged: soundSettings.enabled
-                  ? (value) {
-                      ref
-                          .read(soundSettingsNotifierProvider.notifier)
-                          .setPlayForNormalOrders(value ?? true);
-                    }
-                  : null,
-            ),
-            CheckboxListTile(
-              title: const Text('High Priority Orders'),
-              value: soundSettings.playForHighOrders,
-              onChanged: soundSettings.enabled
-                  ? (value) {
-                      ref
-                          .read(soundSettingsNotifierProvider.notifier)
-                          .setPlayForHighOrders(value ?? true);
-                    }
-                  : null,
-            ),
-            CheckboxListTile(
-              title: const Text('Urgent Orders'),
-              value: soundSettings.playForUrgentOrders,
-              onChanged: soundSettings.enabled
-                  ? (value) {
-                      ref
-                          .read(soundSettingsNotifierProvider.notifier)
-                          .setPlayForUrgentOrders(value ?? true);
-                    }
-                  : null,
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
-        ),
-      ],
-    );
-  }
 }

@@ -31,6 +31,9 @@ dependencies:
   # Audio for notifications
   audioplayers: ^5.2.1
 
+  # Storage
+  shared_preferences: ^2.2.2
+
   # Code Generation
   freezed_annotation: ^2.4.1
   json_annotation: ^4.8.1

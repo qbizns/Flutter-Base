@@ -5,6 +5,7 @@ import 'package:pos_core/pos_core.dart';
 
 import 'src/features/kds/presentation/pages/kds_display_page_enhanced.dart';
 import 'src/features/analytics/presentation/pages/analytics_dashboard_page.dart';
+import 'src/features/settings/presentation/pages/kds_settings_page.dart';
 
 void main() {
   // Run app in development environment
@@ -51,6 +52,10 @@ final _router = GoRouter(
     GoRoute(
       path: '/analytics',
       builder: (context, state) => const AnalyticsDashboardPage(),
+    ),
+    GoRoute(
+      path: '/settings',
+      builder: (context, state) => const KdsSettingsPage(),
     ),
   ],
 );
