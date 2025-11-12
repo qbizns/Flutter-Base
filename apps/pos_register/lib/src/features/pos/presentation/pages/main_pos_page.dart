@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 import 'package:pos_ui/pos_ui.dart';
 
+import '../../../session/presentation/widgets/session_status_bar.dart';
+import '../../../session/presentation/widgets/session_guard.dart';
+
 /// Main POS screen with product grid and cart
 class MainPosPage extends ConsumerStatefulWidget {
   const MainPosPage({super.key});
@@ -42,7 +45,9 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
             ),
         ],
       ),
-      body: LayoutBuilder(
+      body: SessionGuard(
+        requireOpenSession: true,
+        child: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 900;
 
@@ -53,6 +58,9 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
                 flex: isDesktop ? 2 : 1,
                 child: Column(
                   children: [
+                    // Session Status Bar (Odoo-style)
+                    const SessionStatusBar(),
+
                     // Categories
                     categoriesAsync.when(
                       data: (categories) => CategoryChipList(
@@ -111,6 +119,7 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
             ],
           );
         },
+        ),
       ),
       floatingActionButton: cart.isNotEmpty &&
               MediaQuery.of(context).size.width < 900

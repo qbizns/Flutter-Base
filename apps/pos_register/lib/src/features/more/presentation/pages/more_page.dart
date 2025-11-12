@@ -73,6 +73,13 @@ class MorePage extends ConsumerWidget {
             _buildSectionHeader(context, 'POS Settings'),
             _buildSettingsTile(
               context,
+              icon: Icons.lock_clock,
+              title: 'Session Management',
+              subtitle: 'Manage POS sessions and view history',
+              onTap: () => context.push('/session/history'),
+            ),
+            _buildSettingsTile(
+              context,
               icon: Icons.receipt_long,
               title: 'Receipt Printer',
               subtitle: 'Configure receipt printer settings',

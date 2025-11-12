@@ -7,6 +7,10 @@ import 'src/features/checkout/presentation/pages/checkout_page.dart';
 import 'src/features/more/presentation/pages/more_page.dart';
 import 'src/features/orders/presentation/pages/orders_page.dart';
 import 'src/features/pos/presentation/pages/main_pos_page.dart';
+import 'src/features/session/presentation/pages/session_open_page.dart';
+import 'src/features/session/presentation/pages/session_close_page.dart';
+import 'src/features/session/presentation/pages/session_history_page.dart';
+import 'src/features/session/presentation/pages/session_details_page.dart';
 import 'src/features/shell/presentation/pages/app_shell.dart';
 import 'src/features/tables/presentation/pages/tables_page.dart';
 
@@ -34,8 +38,8 @@ class PosRegisterApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'SmartPOS Register',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: VodoTheme.lightTheme,
+      darkTheme: VodoTheme.darkTheme,
       themeMode: ThemeMode.system,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
@@ -94,6 +98,26 @@ final _router = GoRouter(
     GoRoute(
       path: '/checkout',
       builder: (context, state) => const CheckoutPage(),
+    ),
+    // Session Management Routes (outside of shell)
+    GoRoute(
+      path: '/session/open',
+      builder: (context, state) => const SessionOpenPage(),
+    ),
+    GoRoute(
+      path: '/session/close',
+      builder: (context, state) => const SessionClosePage(),
+    ),
+    GoRoute(
+      path: '/session/history',
+      builder: (context, state) => const SessionHistoryPage(),
+    ),
+    GoRoute(
+      path: '/session/details/:id',
+      builder: (context, state) {
+        final sessionId = state.pathParameters['id']!;
+        return SessionDetailsPage(sessionId: sessionId);
+      },
     ),
   ],
 );
