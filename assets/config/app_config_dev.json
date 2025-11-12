@@ -1,7 +1,9 @@
 {
   "appName": "Flutter Starter (Dev)",
   "appTagline": "Your Production-Ready Flutter Foundation",
-  "apiBaseUrl": "https://api-dev.example.com",
+  "apiBaseUrl": "http://localhost:3000/api/v1",
+  "deviceBridgeUrl": "http://localhost:8080",
+  "deviceBridgeWebSocketUrl": "ws://localhost:8080/v1/events",
   "enableLogging": true,
   "featureFlags": {
     "enableAnalytics": false,

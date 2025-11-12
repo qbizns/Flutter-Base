@@ -1,7 +1,9 @@
 {
   "appName": "Flutter Starter",
   "appTagline": "Your Production-Ready Flutter Foundation",
-  "apiBaseUrl": "https://api.example.com",
+  "apiBaseUrl": "https://api.smartpos.com/api/v1",
+  "deviceBridgeUrl": "https://devices.smartpos.com",
+  "deviceBridgeWebSocketUrl": "wss://devices.smartpos.com/v1/events",
   "enableLogging": false,
   "featureFlags": {
     "enableAnalytics": true,

@@ -17,10 +17,19 @@ dependencies:
 
   # Networking (for communicating with device bridge service)
   dio: ^5.7.0
+  http: ^1.1.0
+  web_socket_channel: ^2.4.0
+
+  # gRPC support (optional)
+  grpc: ^3.2.0
+  protobuf: ^3.1.0
 
   # Utilities
   equatable: ^2.0.5
   json_annotation: ^4.9.0
+  meta: ^1.10.0
+  rxdart: ^0.27.7
+  logging: ^1.2.0
 
 dev_dependencies:
   flutter_test:
