@@ -493,4 +493,4 @@ sudo chmod 666 /dev/usb/lp0
 For hardware-specific issues:
 - Check Device Bridge logs: `./device-bridge logs`
 - Device manufacturer documentation
-- Community forums: https://github.com/Macber-eg/Flutter-Device/discussions
+- Community forums: https://github.com/qbizns/Flutter-Device/discussions
