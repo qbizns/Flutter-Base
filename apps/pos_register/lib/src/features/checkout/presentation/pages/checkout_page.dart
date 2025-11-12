@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 import 'package:pos_ui/pos_ui.dart';
 
+import '../../../session/presentation/widgets/session_guard.dart';
+
 /// Checkout page for completing orders and processing payments
 class CheckoutPage extends ConsumerStatefulWidget {
   const CheckoutPage({super.key});
@@ -43,7 +45,9 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: Stepper(
+      body: SessionGuard(
+        requireOpenSession: true,
+        child: Stepper(
         currentStep: _currentStep,
         onStepContinue: _handleStepContinue,
         onStepCancel: () {
@@ -115,6 +119,7 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
             state: _currentStep > 3 ? StepState.complete : StepState.indexed,
           ),
         ],
+        ),
       ),
     );
   }

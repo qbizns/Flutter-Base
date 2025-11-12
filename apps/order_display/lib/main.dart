@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 
+import 'src/features/display/presentation/pages/customer_display_page.dart';
 import 'src/features/display/presentation/pages/order_status_display_page.dart';
 import 'src/features/settings/presentation/pages/display_settings_page.dart';
 
@@ -27,21 +28,21 @@ void main() {
   );
 }
 
-/// Customer Order Status Display App
+/// Customer Display App
 ///
-/// Large screen display system for restaurants to show order statuses
-/// to customers in a clear, engaging way.
+/// Odoo-style POS customer-facing display that shows the current cart
+/// as items are scanned at the register in real-time.
 ///
 /// Features:
-/// - Prominent "Now Serving" display
-/// - "Ready for Pickup" grid
-/// - Preparing orders ticker
-/// - Real-time updates
-/// - Audio announcements
-/// - Multi-language support
-/// - Customizable themes
-/// - Auto-refresh
-/// - Full-screen kiosk mode
+/// - Real-time cart display with item details
+/// - Last scanned item highlighting
+/// - Running total prominently displayed
+/// - Payment status display
+/// - Thank you screen after completion
+/// - Idle screen with marketing content
+/// - Smooth animations and transitions
+/// - Following Odoo POS customer display patterns 100%
+/// - Full-screen landscape display
 class OrderDisplayApp extends StatelessWidget {
   const OrderDisplayApp({super.key});
 
@@ -122,9 +123,15 @@ class OrderDisplayApp extends StatelessWidget {
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
-    // Main display
+    // Main display - Odoo-style Customer Display
     GoRoute(
       path: '/',
+      builder: (context, state) => const CustomerDisplayPage(),
+    ),
+
+    // Alternate display - Order Status Queue
+    GoRoute(
+      path: '/queue',
       builder: (context, state) => const OrderStatusDisplayPage(),
     ),
 
