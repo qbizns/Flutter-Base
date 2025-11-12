@@ -10,7 +10,7 @@ import 'src/features/zones/presentation/pages/delivery_zones_page.dart';
 void main() {
   // Run app in development environment
   AppBootstrap.run(
-    environment: Environment.development,
+    environment: Environment.dev,
     appBuilder: (config) => const ProviderScope(
       child: DeliveryManagementApp(),
     ),

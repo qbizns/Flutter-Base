@@ -9,7 +9,7 @@ import 'src/features/waitlist/presentation/pages/waitlist_page.dart';
 
 void main() {
   AppBootstrap.run(
-    environment: Environment.development,
+    environment: Environment.dev,
     appBuilder: (config) => const ProviderScope(
       child: ReservationApp(),
     ),

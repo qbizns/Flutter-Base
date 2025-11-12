@@ -23,7 +23,9 @@ class ConfigLoader {
         environment: environment,
         appName: jsonMap['appName'] as String,
         appTagline: jsonMap['appTagline'] as String,
-        apiBaseUrl: jsonMap['apiBaseUrl'] as String,
+        apiBaseUrl: jsonMap['apiBaseUrl'] as String? ?? '',
+        deviceBridgeUrl: jsonMap['deviceBridgeUrl'] as String? ?? '',
+        deviceBridgeWebSocketUrl: jsonMap['deviceBridgeWebSocketUrl'] as String? ?? '',
         enableLogging: jsonMap['enableLogging'] as bool,
         featureFlags: jsonMap.containsKey('featureFlags')
             ? FeatureFlags.fromJson(

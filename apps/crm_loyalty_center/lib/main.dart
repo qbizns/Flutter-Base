@@ -11,7 +11,7 @@ import 'src/features/vouchers/presentation/pages/vouchers_page.dart';
 
 void main() {
   AppBootstrap.run(
-    environment: Environment.development,
+    environment: Environment.dev,
     appBuilder: (config) => const ProviderScope(
       child: CRMLoyaltyCenterApp(),
     ),
