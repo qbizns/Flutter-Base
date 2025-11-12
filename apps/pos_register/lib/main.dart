@@ -6,6 +6,7 @@ import 'package:pos_core/pos_core.dart';
 import 'src/features/checkout/presentation/pages/checkout_page.dart';
 import 'src/features/more/presentation/pages/more_page.dart';
 import 'src/features/orders/presentation/pages/orders_page.dart';
+import 'src/features/orders/presentation/pages/vodo_orders_page.dart';
 import 'src/features/payment/presentation/pages/payment_page.dart';
 import 'src/features/pos/presentation/pages/main_pos_page.dart';
 import 'src/features/session/presentation/pages/session_open_page.dart';
@@ -80,7 +81,7 @@ final _router = GoRouter(
           routes: [
             GoRoute(
               path: '/orders',
-              builder: (context, state) => const OrdersPage(),
+              builder: (context, state) => const VodoOrdersPage(),
             ),
           ],
         ),
