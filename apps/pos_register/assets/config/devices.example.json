@@ -1,0 +1,35 @@
+{
+  "$schema": "https://smartpos.app/schemas/devices.json",
+  "deviceBridgeUrl": "http://localhost:8080",
+  "devices": {
+    "receiptPrinterId": "printer-receipt-01",
+    "kitchenPrinterId": "printer-kitchen-01",
+    "barcodeScan​nerId": "scanner-01",
+    "paymentTerminalId": "terminal-01"
+  },
+  "printerSettings": {
+    "receipt": {
+      "charactersPerLine": 48,
+      "autoCut": true,
+      "openDrawer": true,
+      "copies": 1,
+      "header": "SmartPOS Restaurant",
+      "footer": "Thank you for your business!",
+      "printLogo": false,
+      "logoPath": null
+    },
+    "kitchen": {
+      "charactersPerLine": 42,
+      "autoCut": true,
+      "copies": 1,
+      "largeFonts": true,
+      "buzzer": false
+    }
+  },
+  "description": "Device configuration for POS station #1",
+  "notes": [
+    "This is an example configuration file",
+    "Copy this to devices.json and configure for your hardware",
+    "Device IDs must match devices registered in Device Bridge"
+  ]
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/audio_announcement_service.dart';
+import '../widgets/connection_settings_card.dart';
 
 /// Display Settings Page
 ///
@@ -54,6 +55,11 @@ class _DisplaySettingsPageState extends ConsumerState<DisplaySettingsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Connection settings
+            const ConnectionSettingsCard(),
+
+            const SizedBox(height: 32),
+
             // Language settings
             _buildSection(
               context,
