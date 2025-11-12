@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 import '../../../session/presentation/widgets/session_guard.dart';
 import '../../../data/services/sync_service.dart';
+import '../../../data/providers/hardware_providers.dart';
 import '../widgets/vodo_payment_grid.dart';
 import '../widgets/cash_payment_dialog.dart';
 
@@ -530,6 +531,13 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
 
       if (!mounted) return;
 
+      // Print receipt (non-blocking)
+      _printReceipt(
+        orderNumber: orderNumber,
+        cashierName: cashierName,
+        totalPaid: _totalPaid,
+      );
+
       // Clear cart
       ref.read(cartNotifierProvider.notifier).clear();
 
@@ -570,6 +578,65 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
       if (mounted) {
         setState(() => _isProcessing = false);
       }
+    }
+  }
+
+  /// Print receipt using hardware service
+  Future<void> _printReceipt({
+    required String orderNumber,
+    required String cashierName,
+    required double totalPaid,
+  }) async {
+    try {
+      final hardware = ref.read(hardwareServiceProvider);
+
+      // Create order object from cart
+      final order = Order(
+        id: orderNumber,
+        orderNumber: orderNumber,
+        organizationId: 'org-1', // TODO: Get from config
+        items: _cart.items.toList(),
+        subtotal: _cart.subtotal,
+        tax: _cart.tax,
+        total: _cart.total,
+        status: OrderStatus.completed,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        // Payment method from first payment line
+        paymentMethod: _paymentLines.isNotEmpty
+            ? _paymentLines.first.method.name
+            : 'Cash',
+      );
+
+      // Calculate cash received and change if cash payment
+      double? cashReceived;
+      double? change;
+      if (_paymentLines.isNotEmpty &&
+          _paymentLines.first.method.id == 'cash') {
+        cashReceived = totalPaid;
+        change = totalPaid - _cart.total;
+      }
+
+      // Print receipt
+      final result = await hardware.printReceipt(
+        order: order,
+        cashierName: cashierName,
+        cashReceived: cashReceived,
+        change: change,
+      );
+
+      result.when(
+        success: (jobId) {
+          debugPrint('[PaymentPage] Receipt printed: $jobId');
+        },
+        failure: (failure) {
+          debugPrint('[PaymentPage] Print failed: ${failure.message}');
+          // Don't show error to user - printing is optional
+        },
+      );
+    } catch (e) {
+      debugPrint('[PaymentPage] Print receipt error: $e');
+      // Don't show error to user - printing is optional
     }
   }
 }

@@ -3,6 +3,7 @@
 /// Following Odoo POS order entry patterns
 library;
 
+import 'package:device_bridge_client/device_bridge_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,24 @@ import 'package:pos_core/pos_core.dart';
 
 import '../../data/models/waiter_models.dart';
 import '../../data/providers.dart';
+
+// Hardware providers
+final deviceBridgeClientProvider = Provider<DeviceBridgeClient>((ref) {
+  final config = ref.watch(configProvider);
+  final deviceBridgeUrl = config.metadata['deviceBridgeUrl'] as String? ??
+      'http://localhost:8080';
+
+  return DeviceBridgeClient(
+    baseUrl: deviceBridgeUrl,
+    timeout: const Duration(seconds: 30),
+    debug: config.environment == Environment.development,
+  );
+});
+
+final kitchenPrinterIdProvider = Provider<String?>((ref) {
+  final config = ref.watch(configProvider);
+  return config.metadata['kitchenPrinterId'] as String?;
+});
 
 /// Order Taking Page
 /// Shows product catalog and order cart
@@ -544,6 +563,9 @@ class _OrderTakingPageState extends ConsumerState<OrderTakingPage> {
     if (mounted) {
       result.when(
         success: (_) {
+          // Print kitchen ticket (non-blocking)
+          _printKitchenOrder();
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Order sent to kitchen')),
           );
@@ -558,6 +580,77 @@ class _OrderTakingPageState extends ConsumerState<OrderTakingPage> {
           );
         },
       );
+    }
+  }
+
+  /// Print kitchen order ticket
+  Future<void> _printKitchenOrder() async {
+    try {
+      final kitchenPrinterId = ref.read(kitchenPrinterIdProvider);
+      if (kitchenPrinterId == null) {
+        debugPrint('[OrderTaking] Kitchen printer not configured');
+        return;
+      }
+
+      final deviceBridge = ref.read(deviceBridgeClientProvider);
+      final printer = deviceBridge.printer(kitchenPrinterId);
+      final waiter = ref.read(currentWaiterProvider);
+
+      // Build kitchen ticket
+      await printer.printReceipt(
+        (b) => b
+          ..text(
+            'KITCHEN ORDER',
+            alignment: TextAlignment.center,
+            size: TextSize.extraLarge,
+            bold: true,
+          )
+          ..lineFeed(lines: 1)
+          ..divider(char: '=')
+          ..text(
+            'Order #${_currentOrder!.orderNumber}',
+            size: TextSize.large,
+            bold: true,
+          )
+          ..text(DateTime.now().toString().substring(0, 19))
+          ..text('Table: ${_currentOrder!.tableName}', bold: true)
+          ..text('Waiter: ${waiter?.name ?? "Unknown"}')
+          ..when(
+            _currentOrder!.guestCount != null,
+            (b) => b..text('Guests: ${_currentOrder!.guestCount}'),
+          )
+          ..divider(char: '=')
+          ..lineFeed(lines: 2)
+          // Order items
+          ..addAll(_currentOrder!.items.map((item) => [
+                b
+                  ..text(
+                    '${item.quantity}x ${item.productName}',
+                    size: TextSize.large,
+                    bold: true,
+                  )
+                  ..when(
+                    item.notes?.isNotEmpty == true,
+                    (b) => b..text('   Notes: ${item.notes!.join(", ")}', bold: true),
+                  )
+                  ..lineFeed(lines: 1),
+              ]).expand((x) => x))
+          ..lineFeed(lines: 2)
+          ..divider(char: '=')
+          ..text(
+            'Total Items: ${_currentOrder!.items.fold<int>(0, (sum, item) => sum + item.quantity)}',
+            size: TextSize.large,
+            bold: true,
+          )
+          ..lineFeed(lines: 3)
+          ..cut(),
+        options: PrintOptions(copies: 1, autoCut: true),
+      );
+
+      debugPrint('[OrderTaking] Kitchen ticket printed');
+    } catch (e) {
+      debugPrint('[OrderTaking] Kitchen print failed: $e');
+      // Don't show error to user - printing is optional
     }
   }
 
