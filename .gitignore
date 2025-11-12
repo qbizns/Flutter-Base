@@ -98,3 +98,7 @@ coverage/
 *.g.dart
 *.freezed.dart
 *.gr.dart
+
+# Cloned repositories (separate projects for reference)
+Flutter-Database/
+Flutter-Device/
