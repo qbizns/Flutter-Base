@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 
-import 'src/features/order/presentation/pages/active_orders_page.dart';
-import 'src/features/order/presentation/pages/order_taking_page.dart';
-import 'src/features/tables/presentation/pages/table_selection_page.dart';
+import 'src/ui/pages/active_orders_page.dart';
+import 'src/ui/pages/floor_plan_page.dart';
+import 'src/ui/pages/order_taking_page.dart';
 
 void main() {
   // Run app in development environment
@@ -122,10 +122,10 @@ class WaiterApp extends StatelessWidget {
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
-    // Table Selection (Home)
+    // Floor Plan (Home)
     GoRoute(
       path: '/',
-      builder: (context, state) => const TableSelectionPage(),
+      builder: (context, state) => const FloorPlanPage(),
     ),
 
     // Order Taking for a specific table
