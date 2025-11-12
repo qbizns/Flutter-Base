@@ -8,6 +8,8 @@ import 'src/features/monitoring/presentation/pages/monitoring_page.dart';
 import 'src/features/products/presentation/pages/products_page.dart';
 import 'src/features/sales/presentation/pages/sales_page.dart';
 import 'src/features/staff/presentation/pages/staff_page.dart';
+import 'src/ui/theme/odoo_theme.dart';
+import 'src/ui/widgets/odoo_layout.dart';
 
 void main() {
   // Run app in development environment
@@ -21,14 +23,17 @@ void main() {
 
 /// Manager Dashboard App
 ///
-/// Comprehensive business intelligence and management application.
+/// Comprehensive business intelligence and management application following
+/// Odoo 17 design guidelines.
+///
 /// Features:
 /// - Real-time operations monitoring
 /// - Sales analytics and reports
 /// - Product performance tracking
-/// - Staff management
-/// - Inventory oversight
-/// - Multi-location support (future)
+/// - Restaurant management (floor plans, tables, reservations)
+/// - Staff management and scheduling
+/// - Device monitoring and configuration
+/// - System settings and configuration
 class ManagerDashboardApp extends StatelessWidget {
   const ManagerDashboardApp({super.key});
 
@@ -36,37 +41,23 @@ class ManagerDashboardApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'SmartPOS Manager',
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
-      themeMode: ThemeMode.system,
+      theme: OdooTheme.light(),
+      darkTheme: OdooTheme.dark(),
+      themeMode: ThemeMode.light, // Default to light mode for Odoo consistency
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );
   }
-
-  ThemeData _buildTheme(Brightness brightness) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: Colors.blue,
-      brightness: brightness,
-    );
-
-    return ThemeData(
-      useMaterial3: true,
-      colorScheme: colorScheme,
-      brightness: brightness,
-      visualDensity: VisualDensity.standard,
-    );
-  }
 }
 
-// Router configuration with shell navigation
+// Router configuration with Odoo layout shell
 final _router = GoRouter(
   initialLocation: '/',
   routes: [
-    // Shell route with persistent navigation
+    // Shell route with Odoo layout
     ShellRoute(
       builder: (context, state, child) {
-        return _DashboardShell(child: child);
+        return OdooLayout(child: child);
       },
       routes: [
         // Dashboard home
@@ -81,10 +72,20 @@ final _router = GoRouter(
           builder: (context, state) => const SalesPage(),
         ),
 
-        // Product performance
+        // Product management
         GoRoute(
           path: '/products',
           builder: (context, state) => const ProductsPage(),
+        ),
+
+        // Restaurant management (NEW)
+        GoRoute(
+          path: '/restaurant',
+          builder: (context, state) => const _PlaceholderPage(
+            title: 'Restaurant Management',
+            subtitle: 'Floor plans, tables, and reservations',
+            icon: Icons.restaurant_outlined,
+          ),
         ),
 
         // Staff management
@@ -93,260 +94,55 @@ final _router = GoRouter(
           builder: (context, state) => const StaffPage(),
         ),
 
+        // Settings (NEW)
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const _PlaceholderPage(
+            title: 'Settings',
+            subtitle: 'System configuration and preferences',
+            icon: Icons.settings_outlined,
+          ),
+        ),
+
+        // Devices monitoring (NEW)
+        GoRoute(
+          path: '/devices',
+          builder: (context, state) => const _PlaceholderPage(
+            title: 'Device Management',
+            subtitle: 'Printers, scanners, and hardware devices',
+            icon: Icons.devices_outlined,
+          ),
+        ),
+
         // Live monitoring
         GoRoute(
           path: '/monitoring',
           builder: (context, state) => const MonitoringPage(),
-        ),
-
-        // Inventory (placeholder)
-        GoRoute(
-          path: '/inventory',
-          builder: (context, state) => const _PlaceholderPage(
-            title: 'Inventory Management',
-            icon: Icons.inventory_2_outlined,
-          ),
-        ),
-
-        // Orders (placeholder)
-        GoRoute(
-          path: '/orders',
-          builder: (context, state) => const _PlaceholderPage(
-            title: 'Orders',
-            icon: Icons.receipt_long,
-          ),
         ),
       ],
     ),
   ],
 );
 
-/// Dashboard Shell - Provides consistent navigation structure
-class _DashboardShell extends StatelessWidget {
-  const _DashboardShell({
-    required this.child,
-  });
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // Navigation rail
-          _NavigationRail(),
-
-          // Main content
-          Expanded(
-            child: child,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Navigation Rail - Sidebar navigation
-class _NavigationRail extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final location = GoRouterState.of(context).uri.path;
-
-    return NavigationDrawer(
-      selectedIndex: _getSelectedIndex(location),
-      onDestinationSelected: (index) {
-        _navigateToIndex(context, index);
-      },
-      children: [
-        // Header
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.business,
-                    size: 32,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'SmartPOS',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Manager Dashboard',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const Divider(),
-
-        // Navigation items
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.dashboard_outlined),
-          selectedIcon: Icon(Icons.dashboard),
-          label: Text('Dashboard'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.monitor_outlined),
-          selectedIcon: Icon(Icons.monitor),
-          label: Text('Live Monitor'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.assessment_outlined),
-          selectedIcon: Icon(Icons.assessment),
-          label: Text('Sales Analytics'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.inventory_2_outlined),
-          selectedIcon: Icon(Icons.inventory_2),
-          label: Text('Products'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.people_outline),
-          selectedIcon: Icon(Icons.people),
-          label: Text('Staff'),
-        ),
-
-        const Divider(),
-
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 28, vertical: 8),
-          child: Text(
-            'OPERATIONS',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-        ),
-
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.receipt_long_outlined),
-          selectedIcon: Icon(Icons.receipt_long),
-          label: Text('Orders'),
-        ),
-        const NavigationDrawerDestination(
-          icon: Icon(Icons.inventory_outlined),
-          selectedIcon: Icon(Icons.inventory),
-          label: Text('Inventory'),
-        ),
-
-        const Spacer(),
-
-        const Divider(),
-
-        // User section
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(
-                Icons.person,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
-            ),
-            title: const Text('Manager'),
-            subtitle: const Text('manager@smartpos.com'),
-            trailing: IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Logout feature coming soon')),
-                );
-              },
-              tooltip: 'Logout',
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  int _getSelectedIndex(String location) {
-    switch (location) {
-      case '/':
-        return 0;
-      case '/monitoring':
-        return 1;
-      case '/sales':
-        return 2;
-      case '/products':
-        return 3;
-      case '/staff':
-        return 4;
-      case '/orders':
-        return 5;
-      case '/inventory':
-        return 6;
-      default:
-        return 0;
-    }
-  }
-
-  void _navigateToIndex(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        context.go('/');
-        break;
-      case 1:
-        context.go('/monitoring');
-        break;
-      case 2:
-        context.go('/sales');
-        break;
-      case 3:
-        context.go('/products');
-        break;
-      case 4:
-        context.go('/staff');
-        break;
-      case 5:
-        context.go('/orders');
-        break;
-      case 6:
-        context.go('/inventory');
-        break;
-    }
-  }
-}
-
 /// Placeholder page for features not yet implemented
 class _PlaceholderPage extends StatelessWidget {
   const _PlaceholderPage({
     required this.title,
+    required this.subtitle,
     required this.icon,
   });
 
   final String title;
+  final String subtitle;
   final IconData icon;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Center(
+    return Container(
+      color: const Color(0xFFF9F9F9), // Odoo background
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -364,9 +160,16 @@ class _PlaceholderPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'This feature is coming soon',
-              style: theme.textTheme.titleLarge?.copyWith(
+              subtitle,
+              style: theme.textTheme.titleMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'This feature is coming soon',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
             ),
             const SizedBox(height: 32),
