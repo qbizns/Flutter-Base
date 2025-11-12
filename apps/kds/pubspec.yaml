@@ -1,0 +1,55 @@
+name: kds
+description: Kitchen Display System - Real-time order display for kitchen operations
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Local packages
+  pos_core:
+    path: ../../packages/pos_core
+  pos_ui:
+    path: ../../packages/pos_ui
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Real-time Updates
+  web_socket_channel: ^2.4.0
+
+  # Audio for notifications
+  audioplayers: ^5.2.1
+
+  # Code Generation
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Linting
+  flutter_lints: ^5.0.0
+
+  # Code Generation
+  build_runner: ^2.4.8
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/sounds/
+    - assets/config/
