@@ -52,6 +52,7 @@ class _SessionOpenPageState extends ConsumerState<SessionOpenPage> {
       final success = await controller.openSession(
         openingCash: _openingCash,
         registerId: _registerId,
+        cashCount: _cashCount, // Pass denomination details (Odoo pattern)
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -60,11 +61,12 @@ class _SessionOpenPageState extends ConsumerState<SessionOpenPage> {
       if (!mounted) return;
 
       if (success) {
-        // Show success message
+        // Show success message with session number
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Session opened successfully'),
+            content: Text('Session opened successfully! Ready to take orders.'),
             backgroundColor: VodoColors.success,
+            duration: Duration(seconds: 3),
           ),
         );
 
@@ -74,8 +76,9 @@ class _SessionOpenPageState extends ConsumerState<SessionOpenPage> {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to open session'),
+            content: Text('Failed to open session. Please try again.'),
             backgroundColor: VodoColors.danger,
+            duration: Duration(seconds: 5),
           ),
         );
       }

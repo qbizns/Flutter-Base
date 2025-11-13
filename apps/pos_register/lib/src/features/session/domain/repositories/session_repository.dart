@@ -11,21 +11,33 @@ abstract class SessionRepository {
   /// Get current active session for the user
   Future<Result<PosSession?>> getCurrentSession();
 
-  /// Open a new POS session
+  /// Open a new POS session (Odoo pattern with denominations)
   /// [openingCash] - Initial cash amount in register
   /// [registerId] - POS register/terminal ID
+  /// [cashDenominations] - Denomination breakdown (Odoo pattern)
+  /// [deviceId] - Unique device identifier
+  /// [deviceName] - Human-readable device name
   /// [notes] - Optional opening notes
   Future<Result<PosSession>> openSession({
     required double openingCash,
     required String registerId,
+    Map<String, dynamic>? cashDenominations,
+    String? deviceId,
+    String? deviceName,
     String? notes,
   });
 
-  /// Close current POS session
+  /// Close current POS session (Odoo pattern with full reconciliation)
   /// [actualClosingCash] - Physical cash counted
+  /// [cashDenominations] - Closing denomination breakdown
+  /// [actualCard] - Card payments counted
+  /// [actualOther] - Other payment methods counted
   /// [notes] - Optional closing notes
   Future<Result<PosSession>> closeSession({
     required double actualClosingCash,
+    Map<String, dynamic>? cashDenominations,
+    double? actualCard,
+    double? actualOther,
     String? notes,
   });
 

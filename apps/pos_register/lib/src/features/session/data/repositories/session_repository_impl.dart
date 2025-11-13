@@ -34,12 +34,18 @@ class SessionRepositoryImpl implements SessionRepository {
   Future<Result<PosSession>> openSession({
     required double openingCash,
     required String registerId,
+    Map<String, dynamic>? cashDenominations,
+    String? deviceId,
+    String? deviceName,
     String? notes,
   }) async {
     try {
       final session = await _remoteDataSource.openSession(
         openingCash: openingCash,
         registerId: registerId,
+        cashDenominations: cashDenominations,
+        deviceId: deviceId,
+        deviceName: deviceName,
         notes: notes,
       );
       return Result.success(session);
@@ -55,6 +61,9 @@ class SessionRepositoryImpl implements SessionRepository {
   @override
   Future<Result<PosSession>> closeSession({
     required double actualClosingCash,
+    Map<String, dynamic>? cashDenominations,
+    double? actualCard,
+    double? actualOther,
     String? notes,
   }) async {
     try {
@@ -74,6 +83,9 @@ class SessionRepositoryImpl implements SessionRepository {
       final session = await _remoteDataSource.closeSession(
         sessionId: currentSession.id,
         actualClosingCash: actualClosingCash,
+        cashDenominations: cashDenominations,
+        actualCard: actualCard,
+        actualOther: actualOther,
         notes: notes,
       );
       return Result.success(session);
