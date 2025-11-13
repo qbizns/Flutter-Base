@@ -1,188 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_core/pos_core.dart';
 
 import '../models/restaurant_table.dart';
-import '../../../ui/theme/odoo_colors.dart';
+import '../data/sources/restaurant_remote_source.dart';
+
+/// Provider for restaurant remote data source.
+///
+/// Switches between HTTP and Mock implementation based on configuration.
+final restaurantRemoteSourceProvider = Provider<RestaurantRemoteSource>((ref) {
+  final config = ref.watch(appConfigProvider);
+  final context = ref.watch(appContextProvider);
+
+  // Use HTTP implementation if API URL is configured and we have tenant ID
+  if (config.apiBaseUrl.isNotEmpty && context.tenantId != null) {
+    final apiClient = ref.watch(apiClientProvider);
+    return RestaurantRemoteSourceHttp(
+      apiClient: apiClient,
+      organizationId: context.tenantId!,
+    );
+  }
+
+  // Fall back to mock for development/testing
+  return RestaurantRemoteSourceMock();
+});
 
 /// Provider for restaurant tables
-///
-/// TODO: Replace with real API integration
-/// GET /api/v1/tables - List all tables
-/// POST /api/v1/tables - Create table
-/// PATCH /api/v1/tables/:id - Update table
-/// DELETE /api/v1/tables/:id - Delete table
 final tablesProvider = StateNotifierProvider<TablesNotifier, List<RestaurantTable>>((ref) {
-  return TablesNotifier();
+  final remoteSource = ref.watch(restaurantRemoteSourceProvider);
+  return TablesNotifier(remoteSource);
 });
 
 class TablesNotifier extends StateNotifier<List<RestaurantTable>> {
-  TablesNotifier() : super(_generateMockTables());
-
-  static List<RestaurantTable> _generateMockTables() {
-    return [
-      // Main Hall
-      const RestaurantTable(
-        id: '1',
-        name: 'Table 1',
-        capacity: 4,
-        status: TableStatus.available,
-        shape: TableShape.square,
-        positionX: 10,
-        positionY: 10,
-        width: 100,
-        height: 100,
-        section: 'Main Hall',
-      ),
-      const RestaurantTable(
-        id: '2',
-        name: 'Table 2',
-        capacity: 4,
-        status: TableStatus.occupied,
-        shape: TableShape.square,
-        positionX: 30,
-        positionY: 10,
-        width: 100,
-        height: 100,
-        section: 'Main Hall',
-        currentOrderId: 'order-123',
-      ),
-      const RestaurantTable(
-        id: '3',
-        name: 'Table 3',
-        capacity: 6,
-        status: TableStatus.reserved,
-        shape: TableShape.rectangle,
-        positionX: 50,
-        positionY: 10,
-        width: 150,
-        height: 100,
-        section: 'Main Hall',
-        reservationName: 'John Doe',
-      ),
-      const RestaurantTable(
-        id: '4',
-        name: 'Table 4',
-        capacity: 2,
-        status: TableStatus.available,
-        shape: TableShape.circle,
-        positionX: 10,
-        positionY: 35,
-        width: 80,
-        height: 80,
-        section: 'Main Hall',
-      ),
-      const RestaurantTable(
-        id: '5',
-        name: 'Table 5',
-        capacity: 4,
-        status: TableStatus.cleaning,
-        shape: TableShape.square,
-        positionX: 30,
-        positionY: 35,
-        width: 100,
-        height: 100,
-        section: 'Main Hall',
-      ),
-
-      // Patio
-      const RestaurantTable(
-        id: '6',
-        name: 'Table 6',
-        capacity: 4,
-        status: TableStatus.available,
-        shape: TableShape.circle,
-        positionX: 10,
-        positionY: 60,
-        width: 100,
-        height: 100,
-        section: 'Patio',
-      ),
-      const RestaurantTable(
-        id: '7',
-        name: 'Table 7',
-        capacity: 6,
-        status: TableStatus.occupied,
-        shape: TableShape.rectangle,
-        positionX: 30,
-        positionY: 60,
-        width: 150,
-        height: 100,
-        section: 'Patio',
-        currentOrderId: 'order-456',
-      ),
-
-      // VIP Section
-      const RestaurantTable(
-        id: '8',
-        name: 'VIP 1',
-        capacity: 8,
-        status: TableStatus.reserved,
-        shape: TableShape.roundedRectangle,
-        positionX: 70,
-        positionY: 35,
-        width: 180,
-        height: 120,
-        section: 'VIP',
-        reservationName: 'Sarah Johnson',
-      ),
-      const RestaurantTable(
-        id: '9',
-        name: 'VIP 2',
-        capacity: 6,
-        status: TableStatus.available,
-        shape: TableShape.roundedRectangle,
-        positionX: 70,
-        positionY: 60,
-        width: 150,
-        height: 100,
-        section: 'VIP',
-      ),
-
-      // Bar Area
-      const RestaurantTable(
-        id: '10',
-        name: 'Bar 1',
-        capacity: 2,
-        status: TableStatus.occupied,
-        shape: TableShape.circle,
-        positionX: 70,
-        positionY: 10,
-        width: 70,
-        height: 70,
-        section: 'Bar',
-        currentOrderId: 'order-789',
-      ),
-      const RestaurantTable(
-        id: '11',
-        name: 'Bar 2',
-        capacity: 2,
-        status: TableStatus.available,
-        shape: TableShape.circle,
-        positionX: 82,
-        positionY: 10,
-        width: 70,
-        height: 70,
-        section: 'Bar',
-      ),
-    ];
+  TablesNotifier(this._remoteSource) : super([]) {
+    _loadTables();
   }
 
-  void addTable(RestaurantTable table) {
-    state = [...state, table];
+  final RestaurantRemoteSource _remoteSource;
+
+  Future<void> _loadTables() async {
+    try {
+      final tables = await _remoteSource.getTables();
+      state = tables;
+    } catch (e) {
+      // Handle error - in production, you might want to show a snackbar or error state
+      print('Error loading tables: $e');
+    }
   }
 
-  void updateTable(String id, RestaurantTable updatedTable) {
-    state = [
-      for (final table in state)
-        if (table.id == id) updatedTable else table,
-    ];
+  Future<void> addTable(RestaurantTable table) async {
+    try {
+      final newTable = await _remoteSource.createTable(table);
+      state = [...state, newTable];
+    } catch (e) {
+      print('Error adding table: $e');
+      rethrow;
+    }
   }
 
-  void deleteTable(String id) {
-    state = state.where((table) => table.id != id).toList();
+  Future<void> updateTable(String id, RestaurantTable updatedTable) async {
+    try {
+      final updated = await _remoteSource.updateTable(id, updatedTable);
+      state = [
+        for (final table in state)
+          if (table.id == id) updated else table,
+      ];
+    } catch (e) {
+      print('Error updating table: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteTable(String id) async {
+    try {
+      await _remoteSource.deleteTable(id);
+      state = state.where((table) => table.id != id).toList();
+    } catch (e) {
+      print('Error deleting table: $e');
+      rethrow;
+    }
   }
 
   void updateTablePosition(String id, double x, double y) {
+    // Update position locally first for smooth UX
     state = [
       for (final table in state)
         if (table.id == id)
@@ -190,97 +90,92 @@ class TablesNotifier extends StateNotifier<List<RestaurantTable>> {
         else
           table,
     ];
+
+    // Then sync with backend
+    final table = state.firstWhere((t) => t.id == id);
+    updateTable(id, table).catchError((e) {
+      print('Error syncing table position: $e');
+    });
   }
 
   void updateTableStatus(String id, TableStatus status) {
+    // Update status locally first for smooth UX
     state = [
       for (final table in state)
         if (table.id == id) table.copyWith(status: status) else table,
     ];
+
+    // Then sync with backend
+    final table = state.firstWhere((t) => t.id == id);
+    updateTable(id, table).catchError((e) {
+      print('Error syncing table status: $e');
+    });
+  }
+
+  Future<void> refresh() async {
+    await _loadTables();
   }
 }
 
 /// Provider for kitchen stations
-///
-/// TODO: Replace with real API integration
-/// GET /api/v1/kitchen-stations - List all stations
-/// POST /api/v1/kitchen-stations - Create station
-/// PATCH /api/v1/kitchen-stations/:id - Update station
-/// DELETE /api/v1/kitchen-stations/:id - Delete station
 final kitchenStationsProvider =
     StateNotifierProvider<KitchenStationsNotifier, List<KitchenStation>>((ref) {
-  return KitchenStationsNotifier();
+  final remoteSource = ref.watch(restaurantRemoteSourceProvider);
+  return KitchenStationsNotifier(remoteSource);
 });
 
 class KitchenStationsNotifier extends StateNotifier<List<KitchenStation>> {
-  KitchenStationsNotifier() : super(_generateMockStations());
-
-  static List<KitchenStation> _generateMockStations() {
-    return [
-      KitchenStation(
-        id: '1',
-        name: 'Grill Station',
-        description: 'Handles all grilled items and meats',
-        color: OdooColors.danger,
-        categories: ['Steaks', 'Burgers', 'Grilled Chicken'],
-        isActive: true,
-        orderPosition: 0,
-      ),
-      KitchenStation(
-        id: '2',
-        name: 'Salad & Cold Station',
-        description: 'Prepares salads, appetizers, and cold dishes',
-        color: OdooColors.success,
-        categories: ['Salads', 'Appetizers', 'Cold Sandwiches'],
-        isActive: true,
-        orderPosition: 1,
-      ),
-      KitchenStation(
-        id: '3',
-        name: 'Pasta & Hot Kitchen',
-        description: 'Pasta, soups, and hot entrees',
-        color: OdooColors.warning,
-        categories: ['Pasta', 'Soups', 'Hot Entrees'],
-        isActive: true,
-        orderPosition: 2,
-      ),
-      KitchenStation(
-        id: '4',
-        name: 'Dessert Station',
-        description: 'Desserts and sweet preparations',
-        color: OdooColors.secondary,
-        categories: ['Desserts', 'Pastries', 'Ice Cream'],
-        isActive: true,
-        orderPosition: 3,
-      ),
-      KitchenStation(
-        id: '5',
-        name: 'Beverage Station',
-        description: 'Drinks, coffee, and cocktails',
-        color: OdooColors.primary,
-        categories: ['Beverages', 'Coffee', 'Cocktails'],
-        isActive: true,
-        orderPosition: 4,
-      ),
-    ];
+  KitchenStationsNotifier(this._remoteSource) : super([]) {
+    _loadStations();
   }
 
-  void addStation(KitchenStation station) {
-    state = [...state, station];
+  final RestaurantRemoteSource _remoteSource;
+
+  Future<void> _loadStations() async {
+    try {
+      final stations = await _remoteSource.getKitchenStations();
+      state = stations;
+    } catch (e) {
+      // Handle error - in production, you might want to show a snackbar or error state
+      print('Error loading kitchen stations: $e');
+    }
   }
 
-  void updateStation(String id, KitchenStation updatedStation) {
-    state = [
-      for (final station in state)
-        if (station.id == id) updatedStation else station,
-    ];
+  Future<void> addStation(KitchenStation station) async {
+    try {
+      final newStation = await _remoteSource.createKitchenStation(station);
+      state = [...state, newStation];
+    } catch (e) {
+      print('Error adding kitchen station: $e');
+      rethrow;
+    }
   }
 
-  void deleteStation(String id) {
-    state = state.where((station) => station.id != id).toList();
+  Future<void> updateStation(String id, KitchenStation updatedStation) async {
+    try {
+      final updated = await _remoteSource.updateKitchenStation(id, updatedStation);
+      state = [
+        for (final station in state)
+          if (station.id == id) updated else station,
+      ];
+    } catch (e) {
+      print('Error updating kitchen station: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteStation(String id) async {
+    try {
+      await _remoteSource.deleteKitchenStation(id);
+      state = state.where((station) => station.id != id).toList();
+    } catch (e) {
+      print('Error deleting kitchen station: $e');
+      rethrow;
+    }
   }
 
   void toggleStationActive(String id) {
+    // Toggle locally first for smooth UX
     state = [
       for (final station in state)
         if (station.id == id)
@@ -288,6 +183,12 @@ class KitchenStationsNotifier extends StateNotifier<List<KitchenStation>> {
         else
           station,
     ];
+
+    // Then sync with backend
+    final station = state.firstWhere((s) => s.id == id);
+    updateStation(id, station).catchError((e) {
+      print('Error syncing station active state: $e');
+    });
   }
 
   void reorderStations(int oldIndex, int newIndex) {
@@ -298,10 +199,21 @@ class KitchenStationsNotifier extends StateNotifier<List<KitchenStation>> {
     final station = newList.removeAt(oldIndex);
     newList.insert(newIndex, station);
 
-    // Update order positions
+    // Update order positions locally
     state = List.generate(
       newList.length,
       (index) => newList[index].copyWith(orderPosition: index),
     );
+
+    // Sync all updated positions with backend
+    for (var i = 0; i < state.length; i++) {
+      updateStation(state[i].id, state[i]).catchError((e) {
+        print('Error syncing station order: $e');
+      });
+    }
+  }
+
+  Future<void> refresh() async {
+    await _loadStations();
   }
 }

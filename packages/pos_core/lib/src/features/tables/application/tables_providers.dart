@@ -10,13 +10,28 @@ import '../domain/usecases/get_available_tables.dart';
 import '../domain/usecases/get_tables.dart';
 import '../domain/usecases/get_zones.dart';
 import '../domain/usecases/update_table_status.dart';
+import '../../../core/network/api_providers.dart';
+import '../../../core/config/config_providers.dart';
+import '../../../core/context/context_providers.dart';
 
 part 'tables_providers.g.dart';
 
 /// Provides the tables remote data source.
 @riverpod
 TablesRemoteSource tablesRemoteSource(TablesRemoteSourceRef ref) {
-  // TODO: Replace with actual API implementation
+  final config = ref.watch(appConfigProvider);
+  final context = ref.watch(appContextProvider);
+
+  // Use HTTP implementation if API URL is configured and we have tenant ID
+  if (config.apiBaseUrl.isNotEmpty && context.tenantId != null) {
+    final apiClient = ref.watch(apiClientProvider);
+    return TablesRemoteSourceHttp(
+      apiClient: apiClient,
+      organizationId: context.tenantId!,
+    );
+  }
+
+  // Fall back to mock for development/testing
   return TablesRemoteSourceMock();
 }
 

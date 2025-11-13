@@ -12,13 +12,28 @@ import '../domain/usecases/get_order_by_id.dart';
 import '../domain/usecases/get_orders.dart';
 import '../domain/usecases/update_order.dart';
 import '../domain/usecases/update_order_status.dart';
+import '../../../core/network/api_providers.dart';
+import '../../../core/config/config_providers.dart';
+import '../../../core/context/context_providers.dart';
 
 part 'orders_providers.g.dart';
 
 /// Provides the orders remote data source.
 @riverpod
 OrdersRemoteSource ordersRemoteSource(OrdersRemoteSourceRef ref) {
-  // TODO: Replace with actual API implementation
+  final config = ref.watch(appConfigProvider);
+  final context = ref.watch(appContextProvider);
+
+  // Use HTTP implementation if API URL is configured and we have tenant ID
+  if (config.apiBaseUrl.isNotEmpty && context.tenantId != null) {
+    final apiClient = ref.watch(apiClientProvider);
+    return OrdersRemoteSourceHttp(
+      apiClient: apiClient,
+      organizationId: context.tenantId!,
+    );
+  }
+
+  // Fall back to mock for development/testing
   return OrdersRemoteSourceMock();
 }
 

@@ -7,13 +7,28 @@ import '../domain/repositories/products_repository.dart';
 import '../domain/usecases/get_categories.dart';
 import '../domain/usecases/get_products.dart';
 import '../domain/usecases/search_products.dart';
+import '../../../core/network/api_providers.dart';
+import '../../../core/config/config_providers.dart';
+import '../../../core/context/context_providers.dart';
 
 part 'products_providers.g.dart';
 
 /// Provides the products remote data source.
 @riverpod
 ProductsRemoteSource productsRemoteSource(ProductsRemoteSourceRef ref) {
-  // TODO: Replace with actual API implementation
+  final config = ref.watch(appConfigProvider);
+  final context = ref.watch(appContextProvider);
+
+  // Use HTTP implementation if API URL is configured and we have tenant ID
+  if (config.apiBaseUrl.isNotEmpty && context.tenantId != null) {
+    final apiClient = ref.watch(apiClientProvider);
+    return ProductsRemoteSourceHttp(
+      apiClient: apiClient,
+      organizationId: context.tenantId!,
+    );
+  }
+
+  // Fall back to mock for development/testing
   return ProductsRemoteSourceMock();
 }
 

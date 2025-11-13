@@ -4,10 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 
 import 'src/features/dashboard/presentation/pages/dashboard_home_page.dart';
+import 'src/features/devices/presentation/pages/devices_page.dart';
 import 'src/features/monitoring/presentation/pages/monitoring_page.dart';
 import 'src/features/products/presentation/pages/products_page.dart';
+import 'src/features/products/presentation/pages/product_details_page.dart';
 import 'src/features/restaurant/presentation/pages/restaurant_page.dart';
 import 'src/features/sales/presentation/pages/sales_page.dart';
+import 'src/features/settings/presentation/pages/settings_page.dart';
 import 'src/features/staff/presentation/pages/staff_page.dart';
 import 'src/ui/theme/odoo_theme.dart';
 import 'src/ui/widgets/odoo_layout.dart';
@@ -79,6 +82,15 @@ final _router = GoRouter(
           builder: (context, state) => const ProductsPage(),
         ),
 
+        // Product details
+        GoRoute(
+          path: '/products/:id',
+          builder: (context, state) {
+            final productId = state.pathParameters['id']!;
+            return ProductDetailsPage(productId: productId);
+          },
+        ),
+
         // Restaurant management
         GoRoute(
           path: '/restaurant',
@@ -91,24 +103,16 @@ final _router = GoRouter(
           builder: (context, state) => const StaffPage(),
         ),
 
-        // Settings (NEW)
+        // Settings
         GoRoute(
           path: '/settings',
-          builder: (context, state) => const _PlaceholderPage(
-            title: 'Settings',
-            subtitle: 'System configuration and preferences',
-            icon: Icons.settings_outlined,
-          ),
+          builder: (context, state) => const SettingsPage(),
         ),
 
-        // Devices monitoring (NEW)
+        // Devices monitoring
         GoRoute(
           path: '/devices',
-          builder: (context, state) => const _PlaceholderPage(
-            title: 'Device Management',
-            subtitle: 'Printers, scanners, and hardware devices',
-            icon: Icons.devices_outlined,
-          ),
+          builder: (context, state) => const DevicesPage(),
         ),
 
         // Live monitoring
