@@ -10,6 +10,7 @@ import 'package:pos_core/pos_core.dart';
 
 import '../../../../data/models/kitchen_order.dart';
 import '../../../../data/models/kitchen_station.dart';
+import '../../../../data/providers/kds_orders_provider.dart';
 import '../../../../data/services/kds_websocket_service.dart';
 import '../../../../data/services/sound_notification_service.dart';
 import '../widgets/kds_order_card_enhanced.dart';
@@ -490,7 +491,14 @@ class _KdsDisplayPageEnhancedState
       soundService.playOrderReady();
     }
 
-    // TODO: Send status update to backend via WebSocket
+    // Send status update to backend
+    final orderNotifier = ref.read(kdsOrderNotifierProvider);
+    try {
+      await orderNotifier.updateOrderStatus(order.id, newStatus);
+    } catch (e) {
+      debugPrint('[KDS] Failed to update order status: $e');
+      // Still update UI even if backend update fails (offline support)
+    }
   }
 
   void _toggleOrderItem(KitchenOrder order, KitchenOrderItem item) {

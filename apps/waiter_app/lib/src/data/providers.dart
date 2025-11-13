@@ -186,6 +186,22 @@ final selectedTableProvider = StateProvider<RestaurantTable?>((ref) => null);
 /// Tracks the order currently being edited/viewed
 final currentOrderProvider = StateProvider<TableOrder?>((ref) => null);
 
+/// Table Orders Provider
+/// Get orders for a specific table
+final tableOrdersProvider = FutureProvider.family<List<Order>, String>((ref, tableId) async {
+  // Get orders from pos_core
+  final ordersAsync = ref.watch(ordersProvider());
+
+  return ordersAsync.when(
+    data: (orders) {
+      // Filter orders for this table
+      return orders.where((order) => order.tableId == tableId).toList();
+    },
+    loading: () => [],
+    error: (_, __) => [],
+  );
+});
+
 // ============================================================================
 // Connection Status
 // ============================================================================

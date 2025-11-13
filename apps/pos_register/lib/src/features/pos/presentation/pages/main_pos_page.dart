@@ -7,9 +7,14 @@ import 'package:pos_ui/pos_ui.dart';
 import '../../../session/presentation/widgets/session_status_bar.dart';
 import '../../../session/presentation/widgets/session_guard.dart';
 import '../../../sync/presentation/widgets/sync_status_indicator.dart';
+import '../../../settings/providers/tax_settings_provider.dart';
+import '../../../data/providers/hardware_providers.dart';
 import '../widgets/vodo_product_grid.dart';
 import '../widgets/product_search_bar.dart';
 import '../widgets/vodo_cart_panel.dart';
+import '../widgets/dialogs/customer_select_dialog.dart';
+import '../widgets/dialogs/order_notes_dialog.dart';
+import '../widgets/dialogs/discount_dialog.dart';
 
 /// Main POS screen with product grid and cart
 class MainPosPage extends ConsumerStatefulWidget {
@@ -185,6 +190,9 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       }
     }
 
+    // Get tax settings
+    final taxSettings = ref.read(taxSettingsNotifierProvider);
+
     // Create order item
     final orderItem = OrderItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -196,7 +204,7 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       productImageUrl: product.imageUrl,
       categoryId: product.categoryId,
       selectedModifiers: selectedModifiers ?? [],
-      taxPercent: 8.5, // TODO: Get from settings
+      taxPercent: taxSettings.defaultTaxPercent,
     );
 
     // Add to cart
@@ -249,45 +257,133 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
     );
   }
 
-  void _handleBarcodeScan() {
-    // TODO: Implement barcode scanning with Device Bridge (Day 4-5)
-    if (mounted) {
+  void _handleBarcodeScan() async {
+    // Listen to barcode scanner stream
+    ref.listen(barcodeScannerStreamProvider, (previous, next) {
+      next.when(
+        data: (barcode) => _onBarcodeScanned(barcode),
+        loading: () {},
+        error: (error, _) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Barcode scanner error: $error'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+      );
+    });
+  }
+
+  Future<void> _onBarcodeScanned(String barcode) async {
+    // Get all products
+    final productsAsync = ref.read(productsProvider());
+
+    final products = productsAsync.when(
+      data: (products) => products,
+      loading: () => <Product>[],
+      error: (_, __) => <Product>[],
+    );
+
+    // Find product by barcode
+    final product = products.where((p) => p.barcode == barcode).firstOrNull;
+
+    if (product == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product not found for barcode: $barcode'),
+            backgroundColor: Colors.orange,
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Add product to cart
+    await _addToCart(product);
+  }
+
+  Future<void> _showCustomerSelect(BuildContext context) async {
+    final customer = await CustomerSelectDialog.show(context);
+    if (customer != null && mounted) {
+      ref.read(cartNotifierProvider.notifier).setCustomer(
+            customer.id,
+            customer.name,
+          );
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Barcode scanning will be implemented in Day 4-5'),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text('Customer: ${customer.name}'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }
   }
 
-  void _showCustomerSelect(BuildContext context) {
-    // TODO: Implement customer selection dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Customer selection coming soon'),
-        duration: Duration(seconds: 1),
-      ),
+  Future<void> _showNotesDialog(BuildContext context) async {
+    final cart = ref.read(cartNotifierProvider);
+    final notes = await OrderNotesDialog.show(
+      context,
+      initialNotes: cart.notes,
     );
+    if (notes != null && mounted) {
+      ref.read(cartNotifierProvider.notifier).setNotes(notes);
+      if (notes.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Order notes added'),
+            duration: Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
-  void _showNotesDialog(BuildContext context) {
-    // TODO: Implement order notes dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Order notes coming soon'),
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
+  Future<void> _showDiscountDialog(BuildContext context) async {
+    final cart = ref.read(cartNotifierProvider);
+    if (cart.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Add items to cart first'),
+          duration: Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
-  void _showDiscountDialog(BuildContext context) {
-    // TODO: Implement discount dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Discount feature coming soon'),
-        duration: Duration(seconds: 1),
-      ),
+    final discountResult = await DiscountDialog.show(
+      context,
+      orderTotal: cart.subtotal,
     );
+    if (discountResult != null && mounted) {
+      if (discountResult.type == DiscountType.percentage) {
+        ref.read(cartNotifierProvider.notifier).applyDiscount(
+              percent: discountResult.value,
+            );
+      } else {
+        ref.read(cartNotifierProvider.notifier).applyDiscount(
+              amount: discountResult.value,
+            );
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Discount applied: ${discountResult.type == DiscountType.percentage ? '${discountResult.value}%' : '\$${discountResult.value.toStringAsFixed(2)}'}',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }

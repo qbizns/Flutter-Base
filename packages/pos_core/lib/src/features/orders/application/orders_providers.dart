@@ -208,6 +208,21 @@ class CartNotifier extends _$CartNotifier {
     state = state.setTip(amount);
   }
 
+  /// Set customer
+  void setCustomer(String? customerId, String? customerName) {
+    state = state.setCustomer(customerId, customerName);
+  }
+
+  /// Set order notes
+  void setNotes(String? notes) {
+    state = state.copyWith(notes: notes);
+  }
+
+  /// Set table
+  void setTable(String? tableId, String? tableName) {
+    state = state.setTable(tableId, tableName);
+  }
+
   /// Clear the cart
   void clear() {
     state = const Cart();

@@ -6,6 +6,8 @@ import 'package:pos_core/pos_core.dart';
 import 'src/ui/pages/active_orders_page.dart';
 import 'src/ui/pages/floor_plan_page.dart';
 import 'src/ui/pages/order_taking_page.dart';
+import 'src/ui/pages/current_order_page.dart';
+import 'src/ui/pages/checkout_page.dart';
 
 void main() {
   // Run app in development environment
@@ -147,14 +149,8 @@ final _router = GoRouter(
     GoRoute(
       path: '/table/:tableId/current-order',
       builder: (context, state) {
-        // TODO: Implement current order view
         final tableId = state.pathParameters['tableId']!;
-        return Scaffold(
-          appBar: AppBar(title: Text('Table $tableId - Current Order')),
-          body: const Center(
-            child: Text('Current order view coming soon'),
-          ),
-        );
+        return CurrentOrderPage(tableId: tableId);
       },
     ),
 
@@ -162,14 +158,8 @@ final _router = GoRouter(
     GoRoute(
       path: '/table/:tableId/checkout',
       builder: (context, state) {
-        // TODO: Implement checkout flow
         final tableId = state.pathParameters['tableId']!;
-        return Scaffold(
-          appBar: AppBar(title: Text('Table $tableId - Checkout')),
-          body: const Center(
-            child: Text('Checkout flow coming soon'),
-          ),
-        );
+        return CheckoutPage(tableId: tableId);
       },
     ),
   ],

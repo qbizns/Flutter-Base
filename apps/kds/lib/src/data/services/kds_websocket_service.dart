@@ -288,8 +288,18 @@ class KdsWebSocketService {
 /// WebSocket service provider
 final kdsWebSocketServiceProvider = Provider<KdsWebSocketService>((ref) {
   // Get WebSocket URL from config
-  // For development, use mock mode
-  final wsUrl = 'ws://localhost:8080/kds/ws'; // TODO: Get from config
+  final config = ref.watch(configProvider);
+
+  // Build WebSocket URL from API base URL
+  String wsUrl = 'ws://localhost:8080/kds/ws'; // Default fallback
+
+  if (config.apiBaseUrl.isNotEmpty) {
+    // Convert HTTP/HTTPS to WS/WSS
+    final baseUrl = config.apiBaseUrl
+        .replaceFirst('http://', 'ws://')
+        .replaceFirst('https://', 'wss://');
+    wsUrl = '$baseUrl/kds/ws';
+  }
 
   final service = KdsWebSocketService(wsUrl: wsUrl);
 
