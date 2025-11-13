@@ -336,7 +336,28 @@ Response: 200 OK
 - Aggregate from orders, payments, order_items
 - Calculate hourly/category breakdowns
 - Cache report after session close
-- Support PDF export
+- Support PDF export (see below)
+
+**PDF/Print Export:**
+```http
+GET /api/v1/organizations/{org_id}/pos-sessions/{session_id}/z-report?format=pdf
+Authorization: Bearer {jwt_token}
+
+Response: 200 OK
+Content-Type: application/pdf
+Content-Disposition: attachment; filename="Z-Report-2025-11-13-001.pdf"
+
+[Binary PDF data]
+```
+
+**Export Requirements:**
+- Generate professional PDF with Odoo-style formatting
+- Include company logo and branding
+- Show all financial data with proper formatting
+- Include denomination breakdown tables
+- Add barcode/QR code for verification
+- Support both PDF download and direct print
+- Cache generated PDFs for 90 days
 
 ---
 
