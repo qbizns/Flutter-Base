@@ -625,6 +625,86 @@ Response: 201 Created
 - Validate price integrity
 - Generate order_number (auto-increment per session)
 
+**Offline-First Support (Client-Side Implementation Complete):**
+- ✅ Orders saved locally first (SQLite/Drift)
+- ✅ Sync queue for background upload
+- ✅ Auto-sync when connection restored
+- ✅ Conflict resolution via timestamps
+- ⚠️ Backend needs to accept offline-created UUIDs
+- ⚠️ Backend should validate sync_token for idempotency
+
+---
+
+#### Update Order Status
+```http
+PATCH /api/v1/organizations/{org_id}/orders/{order_id}/status
+Authorization: Bearer {jwt_token}
+
+Request:
+{
+  "status": "confirmed",  // draft -> confirmed -> preparing -> ready -> completed
+  "notes": "Optional status change notes",
+  "sync_token": "client-generated-uuid" // For idempotency
+}
+
+Response: 200 OK
+{
+  "id": "order-uuid",
+  "order_number": "001",
+  "status": "confirmed",
+  "updated_at": "2025-11-13T12:31:00Z"
+}
+```
+
+**Status Transitions (Odoo Pattern):**
+- draft → confirmed, cancelled
+- confirmed → preparing, cancelled, hold
+- preparing → ready, hold, cancelled
+- ready → delivering, completed, hold
+- delivering → completed, hold
+- hold → preparing, cancelled
+- completed, cancelled (terminal states - no transitions)
+
+---
+
+#### Update Order Items
+```http
+PATCH /api/v1/organizations/{org_id}/orders/{order_id}/items
+Authorization: Bearer {jwt_token}
+
+Request:
+{
+  "action": "add_item",  // add_item, update_quantity, remove_item
+  "item": {
+    "product_id": "product-uuid",
+    "quantity": 1,
+    "unit_price": 12.99,
+    "modifiers": []
+  },
+  // OR for update_quantity
+  "item_id": "item-uuid",
+  "new_quantity": 3,
+  // OR for remove_item
+  "item_id": "item-uuid"
+}
+
+Response: 200 OK
+{
+  "id": "order-uuid",
+  "order_number": "001",
+  "items": [...],
+  "subtotal": 54.96,
+  "total": 58.41,
+  "updated_at": "2025-11-13T12:32:00Z"
+}
+```
+
+**Modification Rules:**
+- Can only modify orders in: draft, pending, confirmed states
+- Auto-recalculate totals after modification
+- Log modification audit trail (who, when, what changed)
+- Notify kitchen if item added after order confirmed
+
 ---
 
 ## PRIORITY 4: KITCHEN DISPLAY SYSTEM
@@ -1028,6 +1108,22 @@ Messages from Client → Server:
 - Heartbeat/ping-pong (30s interval)
 - Graceful reconnection handling
 - Message persistence (Redis) for missed messages
+
+**Kitchen Routing (Client-Side Implementation Complete):**
+- ✅ Automatic station routing based on product category
+- ✅ Support for 5 station types: hot, cold, beverage, dessert, bar
+- ✅ Priority calculation by order type (drive-thru=1, online=5)
+- ✅ Multiple tickets per order (one per station)
+- ✅ WebSocket message formatting ready
+- ⚠️ Backend needs to receive and route tickets to appropriate stations
+- ⚠️ Backend should implement station subscription/unsubscription
+
+**Default Category Routing:**
+- Beverages/Coffee/Tea → beverage station
+- Grilled/Fried/Burgers/Pizza → hot station
+- Salads/Sandwiches/Wraps → cold station
+- Desserts/Cakes/Ice Cream → dessert station
+- Alcoholic Beverages/Cocktails → bar station
 
 ---
 
