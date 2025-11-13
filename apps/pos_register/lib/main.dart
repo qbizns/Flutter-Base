@@ -13,6 +13,7 @@ import 'src/features/session/presentation/pages/session_open_page.dart';
 import 'src/features/session/presentation/pages/session_close_page.dart';
 import 'src/features/session/presentation/pages/session_history_page.dart';
 import 'src/features/session/presentation/pages/session_details_page.dart';
+import 'src/features/session/presentation/widgets/session_guard.dart';
 import 'src/features/shell/presentation/pages/app_shell.dart';
 import 'src/features/tables/presentation/pages/tables_page.dart';
 
@@ -58,34 +59,40 @@ final _router = GoRouter(
         return AppShell(navigationShell: navigationShell);
       },
       branches: [
-        // POS Tab
+        // POS Tab (requires active session)
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/',
-              builder: (context, state) => const MainPosPage(),
+              builder: (context, state) => const SessionGuard(
+                child: MainPosPage(),
+              ),
             ),
           ],
         ),
-        // Tables Tab
+        // Tables Tab (requires active session)
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/tables',
-              builder: (context, state) => const TablesPage(),
+              builder: (context, state) => const SessionGuard(
+                child: TablesPage(),
+              ),
             ),
           ],
         ),
-        // Orders Tab
+        // Orders Tab (requires active session)
         StatefulShellBranch(
           routes: [
             GoRoute(
               path: '/orders',
-              builder: (context, state) => const VodoOrdersPage(),
+              builder: (context, state) => const SessionGuard(
+                child: VodoOrdersPage(),
+              ),
             ),
           ],
         ),
-        // More Tab
+        // More Tab (no session required - settings/info)
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -96,29 +103,38 @@ final _router = GoRouter(
         ),
       ],
     ),
-    // Checkout Route (outside of shell)
+    // Checkout Route (requires active session)
     GoRoute(
       path: '/checkout',
-      builder: (context, state) => const CheckoutPage(),
+      builder: (context, state) => const SessionGuard(
+        child: CheckoutPage(),
+      ),
     ),
-    // Payment Route (outside of shell)
+    // Payment Route (requires active session)
     GoRoute(
       path: '/payment',
-      builder: (context, state) => const PaymentPage(),
+      builder: (context, state) => const SessionGuard(
+        child: PaymentPage(),
+      ),
     ),
-    // Session Management Routes (outside of shell)
+    // Session Open Route (no session required - this is where you open it)
     GoRoute(
       path: '/session/open',
       builder: (context, state) => const SessionOpenPage(),
     ),
+    // Session Close Route (requires active session)
     GoRoute(
       path: '/session/close',
-      builder: (context, state) => const SessionClosePage(),
+      builder: (context, state) => const SessionGuard(
+        child: SessionClosePage(),
+      ),
     ),
+    // Session History Route (no session required - view past sessions)
     GoRoute(
       path: '/session/history',
       builder: (context, state) => const SessionHistoryPage(),
     ),
+    // Session Details Route (no session required - view past session details)
     GoRoute(
       path: '/session/details/:id',
       builder: (context, state) {

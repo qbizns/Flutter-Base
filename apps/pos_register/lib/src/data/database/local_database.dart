@@ -111,18 +111,170 @@ class CartBackup extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+/// Cached products for offline operation (Odoo pattern)
+class CachedProducts extends Table {
+  TextColumn get id => text()();
+  TextColumn get sku => text()();
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+
+  // Pricing
+  RealColumn get basePrice => real()();
+  RealColumn get salePrice => real().nullable()();
+  RealColumn get cost => real().nullable()();
+
+  // Tax
+  RealColumn get taxPercent => real()();
+  TextColumn get taxIds => text().nullable()(); // JSON array of tax IDs
+
+  // Category
+  TextColumn get categoryId => text().nullable()();
+  TextColumn get categoryName => text().nullable()();
+
+  // Images
+  TextColumn get imageUrl => text().nullable()();
+  TextColumn get thumbnailUrl => text().nullable()();
+
+  // Inventory
+  IntColumn get stockQuantity => integer().withDefault(const Constant(0))();
+  BoolColumn get trackInventory => boolean().withDefault(const Constant(false))();
+
+  // Status
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  BoolColumn get isFeatured => boolean().withDefault(const Constant(false))();
+
+  // Variants & Modifiers (JSON)
+  TextColumn get variantsJson => text().withDefault(const Constant('[]'))();
+  TextColumn get modifiersJson => text().withDefault(const Constant('[]'))();
+
+  // Full JSON for complex data
+  TextColumn get fullDataJson => text()();
+
+  // Cache metadata
+  DateTimeColumn get cachedAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cached categories for offline operation
+class CachedCategories extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get description => text().nullable()();
+  TextColumn get imageUrl => text().nullable()();
+
+  // Hierarchy
+  TextColumn get parentId => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  // Status
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+
+  // Full JSON
+  TextColumn get fullDataJson => text()();
+
+  // Cache metadata
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cached customers for offline operation
+class CachedCustomers extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get email => text().nullable()();
+  TextColumn get phone => text().nullable()();
+
+  // Loyalty
+  RealColumn get loyaltyPoints => real().withDefault(const Constant(0.0))();
+  TextColumn get loyaltyTier => text().nullable()();
+
+  // Full JSON
+  TextColumn get fullDataJson => text()();
+
+  // Cache metadata
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cached payment methods
+class CachedPaymentMethods extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  TextColumn get type => text()(); // cash, card, mobile, other
+  TextColumn get iconName => text().nullable()();
+
+  // Configuration
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  BoolColumn get requiresAuthorization => boolean().withDefault(const Constant(false))();
+
+  // Full JSON
+  TextColumn get fullDataJson => text()();
+
+  // Cache metadata
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cached tax rates
+class CachedTaxRates extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  RealColumn get rate => real()();
+  TextColumn get type => text()(); // percentage, fixed
+
+  // Applicability
+  BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  BoolColumn get isDefault => boolean().withDefault(const Constant(false))();
+
+  // Full JSON
+  TextColumn get fullDataJson => text()();
+
+  // Cache metadata
+  DateTimeColumn get cachedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Cache metadata for age-based refresh strategy
+class CacheMetadata extends Table {
+  TextColumn get cacheKey => text()(); // e.g., 'products', 'customers'
+  DateTimeColumn get lastRefresh => dateTime()();
+  DateTimeColumn get lastSync => dateTime().nullable()();
+  IntColumn get itemCount => integer()();
+  TextColumn get status => text()(); // fresh, stale, expired
+
+  @override
+  Set<Column> get primaryKey => {cacheKey};
+}
+
 /// Local SQLite database for offline support
 @DriftDatabase(tables: [
   OfflineOrders,
   OfflineOrderItems,
   SyncQueue,
   CartBackup,
+  CachedProducts,
+  CachedCategories,
+  CachedCustomers,
+  CachedPaymentMethods,
+  CachedTaxRates,
+  CacheMetadata,
 ])
 class LocalDatabase extends _$LocalDatabase {
   LocalDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -131,7 +283,15 @@ class LocalDatabase extends _$LocalDatabase {
         await m.createAll();
       },
       onUpgrade: (Migrator m, int from, int to) async {
-        // Handle future schema upgrades here
+        // Version 2: Add master data caching tables
+        if (from < 2) {
+          await m.createTable(cachedProducts);
+          await m.createTable(cachedCategories);
+          await m.createTable(cachedCustomers);
+          await m.createTable(cachedPaymentMethods);
+          await m.createTable(cachedTaxRates);
+          await m.createTable(cacheMetadata);
+        }
       },
     );
   }
@@ -376,12 +536,235 @@ class LocalDatabase extends _$LocalDatabase {
     return result.read(table.$columns.first.count()) ?? 0;
   }
 
+  // ============================================
+  // Cache Management Operations (Odoo pattern)
+  // ============================================
+
+  /// Update cache metadata
+  Future<void> updateCacheMetadata({
+    required String cacheKey,
+    required int itemCount,
+    required String status,
+  }) async {
+    await into(cacheMetadata).insertOnConflictUpdate(
+      CacheMetadataCompanion.insert(
+        cacheKey: cacheKey,
+        lastRefresh: DateTime.now(),
+        lastSync: Value(DateTime.now()),
+        itemCount: itemCount,
+        status: status,
+      ),
+    );
+  }
+
+  /// Get cache metadata by key
+  Future<CacheMetadatumData?> getCacheMetadata(String cacheKey) async {
+    final results = await (select(cacheMetadata)
+          ..where((m) => m.cacheKey.equals(cacheKey)))
+        .get();
+    return results.isEmpty ? null : results.first;
+  }
+
+  /// Check if cache is fresh (< 24 hours old)
+  Future<bool> isCacheFresh(String cacheKey, {Duration maxAge = const Duration(hours: 24)}) async {
+    final metadata = await getCacheMetadata(cacheKey);
+    if (metadata == null) return false;
+
+    final age = DateTime.now().difference(metadata.lastRefresh);
+    return age < maxAge && metadata.status == 'fresh';
+  }
+
+  /// Get all cached products
+  Future<List<CachedProduct>> getAllCachedProducts() async {
+    return await (select(cachedProducts)
+          ..where((p) => p.isActive.equals(true))
+          ..orderBy([(p) => OrderingTerm(expression: p.name)]))
+        .get();
+  }
+
+  /// Bulk insert/update products
+  Future<void> upsertProducts(List<CachedProductsCompanion> products) async {
+    await batch((batch) {
+      for (final product in products) {
+        batch.insert(
+          cachedProducts,
+          product,
+          onConflict: DoUpdate((_) => product),
+        );
+      }
+    });
+
+    await updateCacheMetadata(
+      cacheKey: 'products',
+      itemCount: products.length,
+      status: 'fresh',
+    );
+  }
+
+  /// Search products by name or SKU
+  Future<List<CachedProduct>> searchProducts(String query) async {
+    final lowerQuery = query.toLowerCase();
+    return await (select(cachedProducts)
+          ..where((p) =>
+              p.name.lower().like('%$lowerQuery%') |
+              p.sku.lower().like('%$lowerQuery%'))
+          ..limit(50))
+        .get();
+  }
+
+  /// Get products by category
+  Future<List<CachedProduct>> getProductsByCategory(String categoryId) async {
+    return await (select(cachedProducts)
+          ..where((p) => p.categoryId.equals(categoryId))
+          ..orderBy([(p) => OrderingTerm(expression: p.name)]))
+        .get();
+  }
+
+  /// Get all cached categories
+  Future<List<CachedCategory>> getAllCachedCategories() async {
+    return await (select(cachedCategories)
+          ..where((c) => c.isActive.equals(true))
+          ..orderBy([(c) => OrderingTerm(expression: c.sortOrder)]))
+        .get();
+  }
+
+  /// Bulk insert/update categories
+  Future<void> upsertCategories(List<CachedCategoriesCompanion> categories) async {
+    await batch((batch) {
+      for (final category in categories) {
+        batch.insert(
+          cachedCategories,
+          category,
+          onConflict: DoUpdate((_) => category),
+        );
+      }
+    });
+
+    await updateCacheMetadata(
+      cacheKey: 'categories',
+      itemCount: categories.length,
+      status: 'fresh',
+    );
+  }
+
+  /// Get all cached customers
+  Future<List<CachedCustomer>> getAllCachedCustomers() async {
+    return await (select(cachedCustomers)
+          ..orderBy([(c) => OrderingTerm(expression: c.name)]))
+        .get();
+  }
+
+  /// Search customers by name, email, or phone
+  Future<List<CachedCustomer>> searchCustomers(String query) async {
+    final lowerQuery = query.toLowerCase();
+    return await (select(cachedCustomers)
+          ..where((c) =>
+              c.name.lower().like('%$lowerQuery%') |
+              c.email.lower().like('%$lowerQuery%') |
+              c.phone.like('%$lowerQuery%'))
+          ..limit(50))
+        .get();
+  }
+
+  /// Bulk insert/update customers
+  Future<void> upsertCustomers(List<CachedCustomersCompanion> customers) async {
+    await batch((batch) {
+      for (final customer in customers) {
+        batch.insert(
+          cachedCustomers,
+          customer,
+          onConflict: DoUpdate((_) => customer),
+        );
+      }
+    });
+
+    await updateCacheMetadata(
+      cacheKey: 'customers',
+      itemCount: customers.length,
+      status: 'fresh',
+    );
+  }
+
+  /// Get all cached payment methods
+  Future<List<CachedPaymentMethod>> getAllCachedPaymentMethods() async {
+    return await (select(cachedPaymentMethods)
+          ..where((pm) => pm.isActive.equals(true))
+          ..orderBy([(pm) => OrderingTerm(expression: pm.name)]))
+        .get();
+  }
+
+  /// Bulk insert/update payment methods
+  Future<void> upsertPaymentMethods(List<CachedPaymentMethodsCompanion> methods) async {
+    await batch((batch) {
+      for (final method in methods) {
+        batch.insert(
+          cachedPaymentMethods,
+          method,
+          onConflict: DoUpdate((_) => method),
+        );
+      }
+    });
+
+    await updateCacheMetadata(
+      cacheKey: 'payment_methods',
+      itemCount: methods.length,
+      status: 'fresh',
+    );
+  }
+
+  /// Get all cached tax rates
+  Future<List<CachedTaxRate>> getAllCachedTaxRates() async {
+    return await (select(cachedTaxRates)
+          ..where((t) => t.isActive.equals(true))
+          ..orderBy([(t) => OrderingTerm.desc(t.isDefault), (t) => OrderingTerm(expression: t.name)]))
+        .get();
+  }
+
+  /// Bulk insert/update tax rates
+  Future<void> upsertTaxRates(List<CachedTaxRatesCompanion> taxRates) async {
+    await batch((batch) {
+      for (final taxRate in taxRates) {
+        batch.insert(
+          cachedTaxRates,
+          taxRate,
+          onConflict: DoUpdate((_) => taxRate),
+        );
+      }
+    });
+
+    await updateCacheMetadata(
+      cacheKey: 'tax_rates',
+      itemCount: taxRates.length,
+      status: 'fresh',
+    );
+  }
+
+  /// Mark cache as stale (needs refresh)
+  Future<void> markCacheStale(String cacheKey) async {
+    final metadata = await getCacheMetadata(cacheKey);
+    if (metadata != null) {
+      await (update(cacheMetadata)..where((m) => m.cacheKey.equals(cacheKey)))
+          .write(CacheMetadataCompanion(status: Value('stale')));
+    }
+  }
+
+  /// Clear all cached data
+  Future<void> clearAllCaches() async {
+    await delete(cachedProducts).go();
+    await delete(cachedCategories).go();
+    await delete(cachedCustomers).go();
+    await delete(cachedPaymentMethods).go();
+    await delete(cachedTaxRates).go();
+    await delete(cacheMetadata).go();
+  }
+
   /// Clear all data (for testing/debugging)
   Future<void> clearAllData() async {
     await delete(offlineOrders).go();
     await delete(offlineOrderItems).go();
     await delete(syncQueue).go();
     await delete(cartBackup).go();
+    await clearAllCaches();
   }
 }
 

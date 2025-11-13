@@ -297,6 +297,9 @@ class _SessionHistoryPageState extends ConsumerState<SessionHistoryPage> {
                           ),
                         );
                       },
+                      onExportZReport: session.status == SessionStatus.closed
+                          ? () => _exportZReport(context, session)
+                          : null,
                     );
                   },
                 );
@@ -393,16 +396,86 @@ class _SessionHistoryPageState extends ConsumerState<SessionHistoryPage> {
         return VodoColors.danger;
     }
   }
+
+  /// Export Z-report for closed session (Odoo pattern)
+  Future<void> _exportZReport(BuildContext context, PosSession session) async {
+    // Show options dialog
+    final format = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export Z-Report'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Export closing report for ${session.number}',
+              style: VodoTextStyles.bodyMedium,
+            ),
+            const SizedBox(height: VodoDimensions.spacingMd),
+            Text(
+              'Select export format:',
+              style: VodoTextStyles.bodySmall.copyWith(
+                color: VodoColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context, 'pdf'),
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('PDF'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(context, 'print'),
+            icon: const Icon(Icons.print),
+            label: const Text('Print'),
+          ),
+        ],
+      ),
+    );
+
+    if (format == null) return;
+
+    if (context.mounted) {
+      // TODO: Implement actual Z-report generation
+      // This will need backend API endpoint: GET /organizations/{orgId}/pos-sessions/{sessionId}/z-report
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Z-Report export ($format) - Coming soon!\n'
+            'This will generate a comprehensive closing report with:\n'
+            '• Opening/closing cash with denominations\n'
+            '• All transactions and cash movements\n'
+            '• Payment method breakdown\n'
+            '• Variance analysis',
+          ),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'OK',
+            onPressed: () {},
+          ),
+        ),
+      );
+    }
+  }
 }
 
 /// Session list item widget (Odoo-style)
 class _SessionListItem extends StatelessWidget {
   final PosSession session;
   final VoidCallback onTap;
+  final VoidCallback? onExportZReport;
 
   const _SessionListItem({
     required this.session,
     required this.onTap,
+    this.onExportZReport,
   });
 
   Color _getStatusColor() {
@@ -485,7 +558,7 @@ class _SessionListItem extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header row: Session number + Status badge
+              // Header row: Session number + Status badge + Export button
               Row(
                 children: [
                   Expanded(
@@ -506,6 +579,19 @@ class _SessionListItem extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Export Z-Report button for closed sessions
+                  if (onExportZReport != null) ...[
+                    IconButton(
+                      onPressed: onExportZReport,
+                      icon: const Icon(Icons.print),
+                      tooltip: 'Export Z-Report',
+                      iconSize: 20,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      color: VodoColors.primary,
+                    ),
+                    const SizedBox(width: VodoDimensions.spacingSm),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,

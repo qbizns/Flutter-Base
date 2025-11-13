@@ -43,24 +43,40 @@ class SessionRemoteDataSource {
     }
   }
 
-  /// Open a new POS session
+  /// Open a new POS session (Odoo pattern with denominations)
   Future<PosSession> openSession({
     required double openingCash,
     required String registerId,
+    Map<String, dynamic>? cashDenominations,
+    String? deviceId,
+    String? deviceName,
     String? notes,
   }) async {
     try {
       final orgId = _appContext.currentOrganizationId;
+      final userId = _appContext.currentUserId;
+
       if (orgId == null) {
         throw AppException('No organization context');
+      }
+      if (userId == null) {
+        throw AppException('No user logged in');
       }
 
       final response = await _apiClient.post(
         '/organizations/$orgId/pos-sessions/open',
         data: {
-          'opening_cash': openingCash,
-          'register_id': registerId,
-          'notes': notes,
+          'device_id': deviceId ?? registerId,
+          'device_name': deviceName ?? 'POS Terminal',
+          'opened_by': userId,
+          'opening_balance': {
+            'cash': openingCash,
+            'card': 0.0,
+            'other': 0.0,
+          },
+          if (cashDenominations != null)
+            'cash_denominations': cashDenominations,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
         },
       );
 
@@ -74,23 +90,38 @@ class SessionRemoteDataSource {
     }
   }
 
-  /// Close current POS session
+  /// Close current POS session (Odoo pattern with full reconciliation)
   Future<PosSession> closeSession({
     required String sessionId,
     required double actualClosingCash,
+    Map<String, dynamic>? cashDenominations,
+    double? actualCard,
+    double? actualOther,
     String? notes,
   }) async {
     try {
       final orgId = _appContext.currentOrganizationId;
+      final userId = _appContext.currentUserId;
+
       if (orgId == null) {
         throw AppException('No organization context');
+      }
+      if (userId == null) {
+        throw AppException('No user logged in');
       }
 
       final response = await _apiClient.post(
         '/organizations/$orgId/pos-sessions/$sessionId/close',
         data: {
-          'actual_closing_cash': actualClosingCash,
-          'notes': notes,
+          'closed_by': userId,
+          'counted_cash': {
+            'cash': actualClosingCash,
+            'card': actualCard ?? 0.0,
+            'other': actualOther ?? 0.0,
+          },
+          if (cashDenominations != null)
+            'cash_denominations': cashDenominations,
+          if (notes != null && notes.isNotEmpty) 'closing_notes': notes,
         },
       );
 

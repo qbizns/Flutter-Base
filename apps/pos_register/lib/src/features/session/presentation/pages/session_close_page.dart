@@ -43,37 +43,54 @@ class _SessionClosePageState extends ConsumerState<SessionClosePage> {
       return;
     }
 
-    // Show confirmation dialog
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Close Session?'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Are you sure you want to close this session?'),
-            const SizedBox(height: VodoDimensions.spacingMd),
-            _buildReconciliationSummary(session),
+    // Calculate variance
+    final difference = _actualClosingCash - session.expectedClosingCash;
+    final differencePercent = session.expectedClosingCash > 0
+        ? (difference / session.expectedClosingCash) * 100
+        : 0.0;
+    final hasSignificantVariance = differencePercent.abs() > 2.0;
+
+    // Require confirmation for significant variance
+    if (hasSignificantVariance) {
+      final confirmed = await _showVarianceConfirmation(
+        session,
+        difference,
+        differencePercent,
+      );
+      if (confirmed != true) return;
+    } else {
+      // Show normal confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Close Session?'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Are you sure you want to close this session?'),
+              const SizedBox(height: VodoDimensions.spacingMd),
+              _buildReconciliationSummary(session),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VodoColors.danger,
+              ),
+              child: const Text('Close Session'),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VodoColors.danger,
-            ),
-            child: const Text('Close Session'),
-          ),
-        ],
-      ),
-    );
+      );
 
-    if (confirmed != true) return;
+      if (confirmed != true) return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -82,6 +99,7 @@ class _SessionClosePageState extends ConsumerState<SessionClosePage> {
 
       final success = await controller.closeSession(
         actualClosingCash: _actualClosingCash,
+        cashCount: _cashCount, // Pass denomination details (Odoo pattern)
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -90,11 +108,20 @@ class _SessionClosePageState extends ConsumerState<SessionClosePage> {
       if (!mounted) return;
 
       if (success) {
-        // Show success message
+        // Show success message with variance info
+        final message = difference.abs() < 0.01
+            ? 'Session closed successfully! Cash balanced perfectly.'
+            : difference > 0
+                ? 'Session closed. Cash over by \$${difference.abs().toStringAsFixed(2)}'
+                : 'Session closed. Cash short by \$${difference.abs().toStringAsFixed(2)}';
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Session closed successfully'),
-            backgroundColor: VodoColors.success,
+          SnackBar(
+            content: Text(message),
+            backgroundColor: difference.abs() < 0.01
+                ? VodoColors.success
+                : VodoColors.warning,
+            duration: const Duration(seconds: 4),
           ),
         );
 
@@ -104,8 +131,9 @@ class _SessionClosePageState extends ConsumerState<SessionClosePage> {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Failed to close session'),
+            content: Text('Failed to close session. Please try again.'),
             backgroundColor: VodoColors.danger,
+            duration: Duration(seconds: 5),
           ),
         );
       }
@@ -114,6 +142,89 @@ class _SessionClosePageState extends ConsumerState<SessionClosePage> {
         setState(() => _isSubmitting = false);
       }
     }
+  }
+
+  /// Show variance confirmation dialog for significant discrepancies
+  Future<bool?> _showVarianceConfirmation(
+    PosSession session,
+    double difference,
+    double differencePercent,
+  ) async {
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.warning_amber,
+          color: VodoColors.danger,
+          size: VodoDimensions.iconSizeXl,
+        ),
+        title: const Text('Significant Cash Variance'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'There is a significant difference between expected and actual cash:',
+              style: VodoTextStyles.bodyMedium,
+            ),
+            const SizedBox(height: VodoDimensions.spacingLg),
+            Container(
+              padding: VodoDimensions.paddingMd,
+              decoration: BoxDecoration(
+                color: VodoColors.danger.withOpacity(0.1),
+                borderRadius: VodoDimensions.borderRadiusMd,
+                border: Border.all(color: VodoColors.danger),
+              ),
+              child: Column(
+                children: [
+                  _buildSummaryRow(
+                    'Expected',
+                    '\$${session.expectedClosingCash.toStringAsFixed(2)}',
+                    VodoColors.textPrimary,
+                  ),
+                  const Divider(),
+                  _buildSummaryRow(
+                    'Actual',
+                    '\$${_actualClosingCash.toStringAsFixed(2)}',
+                    VodoColors.textPrimary,
+                  ),
+                  const Divider(),
+                  _buildSummaryRow(
+                    'Difference',
+                    '${difference > 0 ? '+' : ''}\$${difference.toStringAsFixed(2)} (${differencePercent > 0 ? '+' : ''}${differencePercent.toStringAsFixed(1)}%)',
+                    VodoColors.danger,
+                    bold: true,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: VodoDimensions.spacingMd),
+            Text(
+              '⚠️ Manager approval may be required',
+              style: VodoTextStyles.bodySmall.copyWith(
+                color: VodoColors.danger,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Go Back'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VodoColors.danger,
+            ),
+            child: const Text('Close Anyway'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleCashCountChanged(CashCount cashCount) {
