@@ -8,6 +8,8 @@ import 'package:pos_core/pos_core.dart';
 
 import '../../../../data/models/kitchen_order.dart';
 import '../../../../data/models/kitchen_station.dart';
+import '../../../../data/providers/kds_realtime_orders_provider.dart';
+import '../../../../data/services/kds_websocket_service.dart';
 import '../widgets/kds_order_card.dart';
 import '../widgets/station_selector.dart';
 import '../widgets/kds_stats_bar.dart';
@@ -25,179 +27,36 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
   KitchenOrderStatus? _filterStatus;
   bool _showCompletedOrders = false;
 
-  // Mock data for development - will be replaced with real-time data
-  List<KitchenOrder> _mockOrders = [];
-
   @override
   void initState() {
     super.initState();
-    _loadMockOrders();
-  }
-
-  void _loadMockOrders() {
-    // Mock orders for testing
-    final now = DateTime.now();
-
-    _mockOrders = [
-      KitchenOrder(
-        id: '1',
-        orderNumber: 'ORD-001',
-        createdAt: now.subtract(const Duration(minutes: 5)),
-        status: KitchenOrderStatus.newOrder,
-        items: [
-          const KitchenOrderItem(
-            id: '1',
-            productId: 'burger-1',
-            productName: 'Classic Burger',
-            categoryId: 'burgers',
-            categoryName: 'Burgers',
-            quantity: 2,
-            basePrice: 12.99,
-            modifiers: ['No Onions', 'Extra Cheese'],
-          ),
-          const KitchenOrderItem(
-            id: '2',
-            productId: 'fries-1',
-            productName: 'French Fries',
-            categoryId: 'sides',
-            categoryName: 'Sides',
-            quantity: 2,
-            basePrice: 3.99,
-          ),
-        ],
-        tableNumber: '12',
-        tableName: 'Table 12',
-        stationIds: ['grill', 'fryer'],
-        notes: 'Customer has nut allergy',
-        hasAllergyInfo: true,
-      ),
-      KitchenOrder(
-        id: '2',
-        orderNumber: 'ORD-002',
-        createdAt: now.subtract(const Duration(minutes: 18)),
-        status: KitchenOrderStatus.preparing,
-        items: [
-          const KitchenOrderItem(
-            id: '3',
-            productId: 'steak-1',
-            productName: 'Ribeye Steak',
-            categoryId: 'steaks',
-            categoryName: 'Steaks',
-            quantity: 1,
-            basePrice: 24.99,
-            modifiers: ['Medium Rare'],
-            isStarted: true,
-          ),
-          const KitchenOrderItem(
-            id: '4',
-            productId: 'salad-1',
-            productName: 'Caesar Salad',
-            categoryId: 'salads',
-            categoryName: 'Salads',
-            quantity: 1,
-            basePrice: 8.99,
-            isStarted: true,
-            isCompleted: true,
-          ),
-        ],
-        tableNumber: '5',
-        tableName: 'Table 5',
-        stationIds: ['grill', 'cold'],
-        startedAt: now.subtract(const Duration(minutes: 15)),
-        priority: OrderPriority.high,
-        isUrgent: true,
-      ),
-      KitchenOrder(
-        id: '3',
-        orderNumber: 'ORD-003',
-        createdAt: now.subtract(const Duration(minutes: 3)),
-        status: KitchenOrderStatus.newOrder,
-        items: [
-          const KitchenOrderItem(
-            id: '5',
-            productId: 'pasta-1',
-            productName: 'Spaghetti Carbonara',
-            categoryId: 'pasta',
-            categoryName: 'Pasta',
-            quantity: 1,
-            basePrice: 14.99,
-          ),
-          const KitchenOrderItem(
-            id: '6',
-            productId: 'drink-1',
-            productName: 'Iced Tea',
-            categoryId: 'drinks',
-            categoryName: 'Drinks',
-            quantity: 2,
-            basePrice: 2.99,
-          ),
-        ],
-        customerName: 'John Doe',
-        stationIds: ['hot', 'bar'],
-      ),
-      KitchenOrder(
-        id: '4',
-        orderNumber: 'ORD-004',
-        createdAt: now.subtract(const Duration(minutes: 8)),
-        status: KitchenOrderStatus.preparing,
-        items: [
-          const KitchenOrderItem(
-            id: '7',
-            productId: 'chicken-1',
-            productName: 'Grilled Chicken',
-            categoryId: 'chicken',
-            categoryName: 'Chicken',
-            quantity: 3,
-            basePrice: 16.99,
-            isStarted: true,
-          ),
-        ],
-        tableNumber: '8',
-        tableName: 'Table 8',
-        stationIds: ['grill'],
-        startedAt: now.subtract(const Duration(minutes: 6)),
-      ),
-      KitchenOrder(
-        id: '5',
-        orderNumber: 'ORD-005',
-        createdAt: now.subtract(const Duration(minutes: 1)),
-        status: KitchenOrderStatus.ready,
-        items: [
-          const KitchenOrderItem(
-            id: '8',
-            productId: 'dessert-1',
-            productName: 'Chocolate Cake',
-            categoryId: 'desserts',
-            categoryName: 'Desserts',
-            quantity: 2,
-            basePrice: 6.99,
-            isStarted: true,
-            isCompleted: true,
-          ),
-        ],
-        tableNumber: '3',
-        tableName: 'Table 3',
-        stationIds: ['dessert'],
-        startedAt: now.subtract(const Duration(minutes: 5)),
-        readyAt: now.subtract(const Duration(minutes: 1)),
-      ),
-    ];
+    // Real-time orders are managed by provider
+    // No need for mock data initialization
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredOrders = _getFilteredOrders();
+    // Watch orders state from provider
+    final ordersState = ref.watch(kdsRealtimeOrdersProvider);
+    final connectionStatus = ordersState.connectionStatus;
+    final allOrders = ordersState.ordersList;
+
+    // Filter orders by station and status
+    final filteredOrders = _getFilteredOrders(allOrders);
 
     return Scaffold(
       backgroundColor: VodoColors.backgroundSecondary,
       body: Column(
         children: [
-          // KDS Header with station selector
-          _buildHeader(),
+          // KDS Header with station selector and connection status
+          _buildHeader(connectionStatus),
+
+          // Show error banner if exists
+          if (ordersState.error != null) _buildErrorBanner(ordersState.error!),
 
           // Stats bar (orders count by status)
           KdsStatsBar(
-            orders: _mockOrders,
+            orders: allOrders,
             selectedStatus: _filterStatus,
             onStatusTap: (status) {
               setState(() {
@@ -217,7 +76,7 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(WebSocketStatus connectionStatus) {
     return Container(
       padding: VodoDimensions.paddingMd,
       decoration: const BoxDecoration(
@@ -246,12 +105,18 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Kitchen Display',
-                        style: VodoTextStyles.headlineSmall.copyWith(
-                          color: VodoColors.textOnPrimary,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            'Kitchen Display',
+                            style: VodoTextStyles.headlineSmall.copyWith(
+                              color: VodoColors.textOnPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: VodoDimensions.spacingSm),
+                          _buildConnectionIndicator(connectionStatus),
+                        ],
                       ),
                       Text(
                         _selectedStation.name,
@@ -269,12 +134,12 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
                   color: VodoColors.textOnPrimary,
                   tooltip: 'Settings',
                 ),
-                // Refresh button
+                // Reconnect button
                 IconButton(
-                  onPressed: () => _refreshOrders(),
+                  onPressed: () => _reconnect(),
                   icon: const Icon(Icons.refresh),
                   color: VodoColors.textOnPrimary,
-                  tooltip: 'Refresh',
+                  tooltip: 'Reconnect',
                 ),
               ],
             ),
@@ -293,6 +158,87 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildConnectionIndicator(WebSocketStatus status) {
+    Color color;
+    String text;
+
+    switch (status) {
+      case WebSocketStatus.connected:
+        color = Colors.greenAccent;
+        text = 'Connected';
+        break;
+      case WebSocketStatus.connecting:
+      case WebSocketStatus.reconnecting:
+        color = Colors.orangeAccent;
+        text = 'Connecting...';
+        break;
+      case WebSocketStatus.disconnected:
+      case WebSocketStatus.error:
+        color = Colors.redAccent;
+        text = 'Disconnected';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: VodoTextStyles.bodySmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String error) {
+    return Container(
+      width: double.infinity,
+      padding: VodoDimensions.paddingSm,
+      color: Colors.red.withOpacity(0.1),
+      child: Row(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.red, size: 20),
+          const SizedBox(width: VodoDimensions.spacingSm),
+          Expanded(
+            child: Text(
+              error,
+              style: VodoTextStyles.bodySmall.copyWith(color: Colors.red),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, size: 18),
+            onPressed: () {
+              ref.read(kdsRealtimeOrdersProvider.notifier).clearError();
+            },
+            color: Colors.red,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
       ),
     );
   }
@@ -366,8 +312,8 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
     );
   }
 
-  List<KitchenOrder> _getFilteredOrders() {
-    return _mockOrders.where((order) {
+  List<KitchenOrder> _getFilteredOrders(List<KitchenOrder> allOrders) {
+    return allOrders.where((order) {
       // Filter by station
       if (_selectedStation.id != 'all') {
         if (!order.stationIds.contains(_selectedStation.id)) {
@@ -392,59 +338,28 @@ class _KdsDisplayPageState extends ConsumerState<KdsDisplayPage> {
   }
 
   void _updateOrderStatus(KitchenOrder order, KitchenOrderStatus newStatus) {
-    setState(() {
-      final index = _mockOrders.indexWhere((o) => o.id == order.id);
-      if (index != -1) {
-        final now = DateTime.now();
-        _mockOrders[index] = order.copyWith(
-          status: newStatus,
-          startedAt: newStatus == KitchenOrderStatus.preparing && order.startedAt == null
-              ? now
-              : order.startedAt,
-          readyAt: newStatus == KitchenOrderStatus.ready && order.readyAt == null
-              ? now
-              : order.readyAt,
-          completedAt: newStatus == KitchenOrderStatus.done && order.completedAt == null
-              ? now
-              : order.completedAt,
+    // Update via provider (optimistic update + backend sync)
+    ref.read(kdsRealtimeOrdersProvider.notifier).updateOrderStatus(
+          order.id,
+          newStatus,
         );
-      }
-    });
-
-    // TODO: Send status update to backend
   }
 
   void _toggleOrderItem(KitchenOrder order, KitchenOrderItem item) {
-    setState(() {
-      final orderIndex = _mockOrders.indexWhere((o) => o.id == order.id);
-      if (orderIndex != -1) {
-        final itemIndex = order.items.indexWhere((i) => i.id == item.id);
-        if (itemIndex != -1) {
-          final now = DateTime.now();
-          final updatedItem = item.copyWith(
-            isStarted: !item.isStarted ? true : item.isStarted,
-            isCompleted: !item.isCompleted,
-            startedAt: !item.isStarted ? now : item.startedAt,
-            completedAt: !item.isCompleted ? now : null,
-          );
-
-          final updatedItems = List<KitchenOrderItem>.from(order.items);
-          updatedItems[itemIndex] = updatedItem;
-
-          _mockOrders[orderIndex] = order.copyWith(items: updatedItems);
-        }
-      }
-    });
+    // Toggle item completion via provider
+    ref.read(kdsRealtimeOrdersProvider.notifier).toggleItemCompletion(
+          order.id,
+          item.id,
+        );
   }
 
-  void _refreshOrders() {
-    setState(() {
-      _loadMockOrders();
-    });
+  void _reconnect() {
+    // Reconnect to WebSocket
+    ref.read(kdsRealtimeOrdersProvider.notifier).reconnect();
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Orders refreshed'),
+        content: Text('Reconnecting...'),
         duration: Duration(seconds: 1),
       ),
     );

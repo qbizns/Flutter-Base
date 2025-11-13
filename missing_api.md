@@ -1127,6 +1127,193 @@ Messages from Client → Server:
 
 ---
 
+### Phase 2 KDS Implementation (COMPLETE - Frontend)
+
+**STATUS:** ✅ Phase 2 Complete (Week 3-4) - Real-time KDS with Odoo patterns
+
+#### Implemented Features (apps/kds/)
+
+1. **Real-Time Order Management** (`kds_realtime_orders_provider.dart`):
+   - WebSocket integration for live order updates
+   - Automatic order state management (New → Preparing → Ready → Done)
+   - Station-based order filtering (8 station types)
+   - Delayed order detection (>15 min with visual alerts)
+   - Order priority sorting (urgent → high → normal)
+   - Optimistic UI updates with backend sync
+   - Connection status monitoring with auto-reconnect
+
+2. **KDS Configuration** (`kds_config.dart`):
+   - Environment-based configuration (dev, staging, production)
+   - WebSocket URL management (ws:// for dev, wss:// for prod)
+   - Configurable reconnect delays and ping intervals
+   - Default: ws://localhost:8080/kds/ws (development)
+
+3. **Enhanced KDS Display** (`kds_display_page.dart`):
+   - Real-time order grid with responsive layout (2-4 columns)
+   - Connection status indicator (Connected/Connecting/Disconnected)
+   - Station selector with 8 predefined stations:
+     * All Orders (filter: all)
+     * Grill Station (burgers, steaks, chicken)
+     * Fryer Station (fries, fried chicken, nuggets)
+     * Cold Prep (salads, sandwiches, wraps)
+     * Hot Prep (pasta, soups, entrees)
+     * Dessert Station (desserts, sweets, pastries)
+     * Bar (drinks, cocktails, beverages)
+     * Expo (quality check)
+   - Status-based filtering (New, Preparing, Ready, Done)
+   - Error banner with dismiss functionality
+   - Elapsed time display with color coding
+   - Manual reconnect button
+
+4. **Sound Notifications** (`sound_notification_service.dart`):
+   - Event-based audio alerts:
+     * New order (normal priority) - single beep
+     * Urgent order (high priority) - triple beep
+     * Order ready - double beep
+     * Order delayed (>15 min) - double beep (warning)
+     * Item completed - single short beep
+   - Configurable settings:
+     * Master enable/disable
+     * Volume control (0.0 - 1.0)
+     * Per-priority toggles (normal, high, urgent)
+     * Delayed order alerts
+     * Ready order alerts
+   - Uses audioplayers package
+   - ⚠️ Currently uses beep placeholders, needs actual sound files
+
+5. **Kitchen Ticket Printing** (`kitchen_ticket_print_service.dart`):
+   - Thermal printer support (80mm, 58mm, receipt formats)
+   - Odoo-style ticket formatting:
+     * Header with restaurant branding
+     * Order number and station assignment
+     * Table/customer information
+     * Order type and priority indicator
+     * Item list with quantities and modifiers
+     * Special instructions and notes
+     * Allergy warnings (highlighted)
+     * Barcode for order tracking
+   - Configurable settings:
+     * Auto-print on new orders
+     * Print on status changes
+     * Font size adjustment
+     * Logo inclusion
+     * Station-based print filtering
+   - Print queue management
+   - Test print functionality
+   - ⚠️ Printing logic is placeholder, needs actual printer integration
+
+6. **Order Models** (Odoo-compliant):
+   - `KitchenOrder` with complete Odoo workflow:
+     * Status: newOrder → preparing → ready → done → cancelled
+     * Priority: normal (3), high (2), urgent (1)
+     * Elapsed time calculation
+     * Delayed order detection (>15 min normal, >10 min urgent)
+     * Color coding: white (new), yellow (preparing), green (ready), gray (done), red (delayed)
+     * Item-level tracking (started, completed timestamps)
+     * Completion percentage calculation
+   - `KitchenStation` with 8 station types
+   - Full JSON serialization for WebSocket messages
+
+#### WebSocket Message Formats (Client-Side Ready)
+
+**Client expects from server:**
+```json
+{
+  "type": "order_created",
+  "data": {
+    "id": "order-uuid",
+    "orderNumber": "ORD-123",
+    "createdAt": "2025-11-13T12:30:00Z",
+    "status": "new",
+    "items": [
+      {
+        "id": "item-uuid",
+        "productId": "prod-uuid",
+        "productName": "Burger",
+        "categoryId": "burgers",
+        "categoryName": "Burgers",
+        "quantity": 2,
+        "basePrice": 12.99,
+        "modifiers": ["No Onions", "Extra Cheese"],
+        "notes": "Well done"
+      }
+    ],
+    "tableNumber": "12",
+    "tableName": "Table 12",
+    "customerName": null,
+    "stationIds": ["grill", "fryer"],
+    "priority": "normal",
+    "notes": "Customer has nut allergy",
+    "specialInstructions": null,
+    "hasAllergyInfo": true,
+    "isUrgent": false
+  },
+  "timestamp": "2025-11-13T12:30:00Z"
+}
+```
+
+**Client sends to server:**
+```json
+{
+  "type": "order_status_update",
+  "data": {
+    "order_id": "order-uuid",
+    "status": "preparing",
+    "updated_at": "2025-11-13T12:31:00Z"
+  }
+}
+```
+
+**Event Types Client Handles:**
+- `order_created` - New order added to KDS
+- `order_updated` - Order details changed (items added/removed)
+- `order_status_changed` - Status transition
+- `order_cancelled` - Order cancelled
+- `item_completed` - Individual item marked complete
+- `ping` - Keepalive heartbeat
+
+**Connection Management:**
+- Auto-reconnect on disconnect (max 10 attempts)
+- Exponential backoff: delay × (attempt + 1)
+- Default delay: 5 seconds
+- Ping interval: 30 seconds
+- Subscribe to `kds_updates` channel on connect
+
+#### Backend Requirements to Match Frontend
+
+1. **WebSocket Endpoint:**
+   - Path: `/kds/ws`
+   - Authentication: JWT in initial handshake or query param
+   - Channels: `kds_updates` (subscribe on connect)
+   - Support for station-based filtering
+
+2. **Event Broadcasting:**
+   - Broadcast to all connected KDS clients when:
+     * Order created (from POS)
+     * Order status updated (from POS or KDS)
+     * Order items modified (from POS)
+     * Order cancelled
+   - Include full order data in broadcast
+   - Filter by station subscriptions
+
+3. **Message Acknowledgment:**
+   - Send pong response to ping messages
+   - Track client subscriptions by station
+   - Support graceful disconnect/reconnect
+
+4. **Order Routing Logic:**
+   - Map order items to stations based on categoryId
+   - Support multiple station assignments per order
+   - Calculate priority: drive-thru=1, takeaway=2, delivery=3, dine-in=4, online=5
+
+5. **Kitchen Ticket Data:**
+   - Include all order details (see JSON format above)
+   - Calculate elapsed time server-side
+   - Flag delayed orders (>15 min)
+   - Support station filtering in queries
+
+---
+
 #### 2. POS Multi-Device Sync WebSocket
 ```
 WebSocket: wss://api.domain.com/ws/pos/{org_id}?device_id={device_id}&auth={jwt}

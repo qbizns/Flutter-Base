@@ -8,6 +8,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../core/config/kds_config.dart';
 import '../models/kitchen_order.dart';
 
 /// WebSocket connection status
@@ -287,21 +288,15 @@ class KdsWebSocketService {
 
 /// WebSocket service provider
 final kdsWebSocketServiceProvider = Provider<KdsWebSocketService>((ref) {
-  // Get WebSocket URL from config
-  final config = ref.watch(configProvider);
+  // Get WebSocket URL from KDS config
+  // Note: Import added at top of file
+  final config = ref.watch(kdsConfigProvider);
 
-  // Build WebSocket URL from API base URL
-  String wsUrl = 'ws://localhost:8080/kds/ws'; // Default fallback
-
-  if (config.apiBaseUrl.isNotEmpty) {
-    // Convert HTTP/HTTPS to WS/WSS
-    final baseUrl = config.apiBaseUrl
-        .replaceFirst('http://', 'ws://')
-        .replaceFirst('https://', 'wss://');
-    wsUrl = '$baseUrl/kds/ws';
-  }
-
-  final service = KdsWebSocketService(wsUrl: wsUrl);
+  final service = KdsWebSocketService(
+    wsUrl: config.kdsWebSocketUrl,
+    reconnectDelay: config.reconnectDelay,
+    pingInterval: config.pingInterval,
+  );
 
   // Dispose when provider is disposed
   ref.onDispose(() => service.dispose());
