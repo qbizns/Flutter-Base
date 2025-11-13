@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:pos_core/pos_core.dart';
 import '../widgets/product_form_dialog.dart';
 import '../widgets/product_grid_card.dart';
@@ -321,10 +322,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
         return ProductGridCard(
           product: product,
           onTap: () {
-            // TODO: Navigate to product details
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Product: ${product.name}')),
-            );
+            context.go('/products/${product.id}');
           },
           onEdit: () => _showProductDialog(product: product),
           onDelete: () => _confirmDelete(product),
@@ -342,6 +340,9 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
         return Card(
           margin: const EdgeInsets.only(bottom: OdooSpacing.md),
           child: ListTile(
+            onTap: () {
+              context.go('/products/${product.id}');
+            },
             contentPadding: const EdgeInsets.all(OdooSpacing.md),
             leading: Container(
               width: 56,
@@ -366,12 +367,13 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: OdooSpacing.xs),
-                Text(
-                  product.category?.name ?? 'No category',
-                  style: OdooTypography.bodySmall.copyWith(
-                    color: OdooColors.textSecondary,
+                if (product.sku != null)
+                  Text(
+                    'SKU: ${product.sku}',
+                    style: OdooTypography.bodySmall.copyWith(
+                      color: OdooColors.textSecondary,
+                    ),
                   ),
-                ),
                 const SizedBox(height: OdooSpacing.xs),
                 Row(
                   children: [

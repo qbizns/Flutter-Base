@@ -9,13 +9,28 @@ import '../domain/usecases/get_payments.dart';
 import '../domain/usecases/get_payments_by_order.dart';
 import '../domain/usecases/process_payment.dart';
 import '../domain/usecases/process_refund.dart';
+import '../../../core/network/api_providers.dart';
+import '../../../core/config/config_providers.dart';
+import '../../../core/context/context_providers.dart';
 
 part 'payments_providers.g.dart';
 
 /// Provides the payments remote data source.
 @riverpod
 PaymentsRemoteSource paymentsRemoteSource(PaymentsRemoteSourceRef ref) {
-  // TODO: Replace with actual API implementation and payment processor integration
+  final config = ref.watch(appConfigProvider);
+  final context = ref.watch(appContextProvider);
+
+  // Use HTTP implementation if API URL is configured and we have tenant ID
+  if (config.apiBaseUrl.isNotEmpty && context.tenantId != null) {
+    final apiClient = ref.watch(apiClientProvider);
+    return PaymentsRemoteSourceHttp(
+      apiClient: apiClient,
+      organizationId: context.tenantId!,
+    );
+  }
+
+  // Fall back to mock for development/testing
   return PaymentsRemoteSourceMock();
 }
 

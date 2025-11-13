@@ -1,7 +1,10 @@
+import 'package:dio/dio.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/entities/modifier.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/entities/product_price.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/errors/exceptions.dart';
 
 /// Remote data source for products.
 ///
@@ -38,6 +41,308 @@ abstract class ProductsRemoteSource {
   Future<void> updateProductStock(String productId, int newQuantity);
 
   Future<void> updateProductAvailability(String productId, bool isAvailable);
+}
+
+/// HTTP implementation of ProductsRemoteSource.
+/// Makes actual API calls to the backend.
+class ProductsRemoteSourceHttp implements ProductsRemoteSource {
+  ProductsRemoteSourceHttp({
+    required ApiClient apiClient,
+    required String organizationId,
+  })  : _apiClient = apiClient,
+        _orgId = organizationId;
+
+  final ApiClient _apiClient;
+  final String _orgId;
+
+  String get _productsPath => '/organizations/$_orgId/products';
+  String get _categoriesPath => '/organizations/$_orgId/categories';
+
+  @override
+  Future<List<Product>> getProducts({
+    String? categoryId,
+    bool activeOnly = true,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (categoryId != null) queryParams['category_id'] = categoryId;
+      if (activeOnly) queryParams['active_only'] = true;
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _productsPath,
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _productFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Product> getProductById(String id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_productsPath/$id',
+      );
+
+      return _productFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Product>> searchProducts(
+    String query, {
+    String? categoryId,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'query': query,
+      };
+
+      if (categoryId != null) queryParams['category_id'] = categoryId;
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_productsPath/search',
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _productFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Product>> getProductsByIds(List<String> ids) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '$_productsPath/batch',
+        data: {'ids': ids},
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _productFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Product>> getFeaturedProducts({int limit = 10}) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_productsPath/featured',
+        queryParameters: {'limit': limit},
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _productFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Product>> getLowStockProducts() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_productsPath/low-stock',
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _productFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Category>> getCategories({
+    String? parentId,
+    bool activeOnly = true,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (parentId != null) queryParams['parent_id'] = parentId;
+      if (activeOnly) queryParams['active_only'] = true;
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _categoriesPath,
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _categoryFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Category> getCategoryById(String id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_categoriesPath/$id',
+      );
+
+      return _categoryFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, int>> getProductsCountByCategory() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_productsPath/count-by-category',
+      );
+
+      final data = response.data!['data'] as Map<String, dynamic>;
+      return data.map((key, value) => MapEntry(key, value as int));
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> updateProductStock(String productId, int newQuantity) async {
+    try {
+      await _apiClient.patch<Map<String, dynamic>>(
+        '$_productsPath/$productId/stock',
+        data: {'stock_quantity': newQuantity},
+      );
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<void> updateProductAvailability(
+    String productId,
+    bool isAvailable,
+  ) async {
+    try {
+      await _apiClient.patch<Map<String, dynamic>>(
+        '$_productsPath/$productId/availability',
+        data: {'is_available': isAvailable},
+      );
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  // JSON serialization helpers
+  Product _productFromJson(Map<String, dynamic> json) {
+    return Product(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      price: (json['price'] as num).toDouble(),
+      sku: json['sku'] as String?,
+      barcode: json['barcode'] as String?,
+      description: json['description'] as String?,
+      categoryId: json['category_id'] as String?,
+      imageUrl: json['image_url'] as String?,
+      thumbnailUrl: json['thumbnail_url'] as String?,
+      isActive: json['is_active'] as bool? ?? true,
+      isAvailable: json['is_available'] as bool? ?? true,
+      isFeatured: json['is_featured'] as bool? ?? false,
+      stockQuantity: json['stock_quantity'] as int?,
+      lowStockThreshold: json['low_stock_threshold'] as int?,
+      trackInventory: json['track_inventory'] as bool? ?? false,
+      allowModifiers: json['allow_modifiers'] as bool? ?? false,
+      modifierGroups: (json['modifier_groups'] as List?)
+          ?.map((m) => _modifierGroupFromJson(m as Map<String, dynamic>))
+          .toList() ?? [],
+      prices: (json['prices'] as List?)
+          ?.map((p) => _productPriceFromJson(p as Map<String, dynamic>))
+          .toList() ?? [],
+      tags: (json['tags'] as List?)
+          ?.map((t) => t as String)
+          .toList() ?? [],
+      preparationTime: json['preparation_time'] as int?,
+      calories: json['calories'] as int?,
+      allergens: (json['allergens'] as List?)
+          ?.map((a) => a as String)
+          .toList() ?? [],
+      sortOrder: json['sort_order'] as int? ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
+    );
+  }
+
+  ModifierGroup _modifierGroupFromJson(Map<String, dynamic> json) {
+    return ModifierGroup(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      modifiers: (json['modifiers'] as List)
+          .map((m) => _modifierFromJson(m as Map<String, dynamic>))
+          .toList(),
+      selectionType: ModifierSelectionType.values.firstWhere(
+        (e) => e.name == json['selection_type'],
+        orElse: () => ModifierSelectionType.single,
+      ),
+      isRequired: json['is_required'] as bool? ?? false,
+      minSelection: json['min_selection'] as int? ?? 0,
+      maxSelection: json['max_selection'] as int?,
+      sortOrder: json['sort_order'] as int? ?? 0,
+    );
+  }
+
+  Modifier _modifierFromJson(Map<String, dynamic> json) {
+    return Modifier(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      price: (json['price'] as num).toDouble(),
+      sku: json['sku'] as String?,
+      isDefault: json['is_default'] as bool? ?? false,
+      isActive: json['is_active'] as bool? ?? true,
+      sortOrder: json['sort_order'] as int? ?? 0,
+    );
+  }
+
+  ProductPrice _productPriceFromJson(Map<String, dynamic> json) {
+    return ProductPrice(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      price: (json['price'] as num).toDouble(),
+      description: json['description'] as String?,
+      sku: json['sku'] as String?,
+      isDefault: json['is_default'] as bool? ?? false,
+      sortOrder: json['sort_order'] as int? ?? 0,
+    );
+  }
+
+  Category _categoryFromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      parentId: json['parent_id'] as String?,
+      imageUrl: json['image_url'] as String?,
+      iconName: json['icon_name'] as String?,
+      color: json['color'] as String?,
+      isActive: json['is_active'] as bool? ?? true,
+      sortOrder: json['sort_order'] as int? ?? 0,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : null,
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
+    );
+  }
 }
 
 /// Mock implementation of ProductsRemoteSource for development.

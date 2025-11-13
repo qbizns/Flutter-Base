@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import '../../domain/entities/table.dart';
 import '../../domain/entities/zone.dart';
 import '../../domain/repositories/tables_repository.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/errors/exceptions.dart';
 
 /// Remote data source for tables.
 ///
@@ -32,6 +35,241 @@ abstract class TablesRemoteSource {
   Future<Map<String, int>> getTableCountByZone();
 
   Future<TableStatistics> getTableStatistics();
+}
+
+/// HTTP implementation of TablesRemoteSource.
+/// Makes actual API calls to the backend.
+class TablesRemoteSourceHttp implements TablesRemoteSource {
+  TablesRemoteSourceHttp({
+    required ApiClient apiClient,
+    required String organizationId,
+  })  : _apiClient = apiClient,
+        _orgId = organizationId;
+
+  final ApiClient _apiClient;
+  final String _orgId;
+
+  String get _tablesPath => '/organizations/$_orgId/tables';
+  String get _zonesPath => '/organizations/$_orgId/zones';
+
+  @override
+  Future<List<Table>> getTables({
+    String? zoneId,
+    TableStatus? status,
+    bool activeOnly = true,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (zoneId != null) queryParams['zone_id'] = zoneId;
+      if (status != null) queryParams['status'] = status.name;
+      if (activeOnly) queryParams['active_only'] = true;
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _tablesPath,
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _tableFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Table> getTableById(String id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_tablesPath/$id',
+      );
+
+      return _tableFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Table>> getAvailableTables({String? zoneId}) async {
+    return getTables(
+      zoneId: zoneId,
+      status: TableStatus.available,
+    );
+  }
+
+  @override
+  Future<List<Table>> getOccupiedTables({String? zoneId}) async {
+    return getTables(
+      zoneId: zoneId,
+      status: TableStatus.occupied,
+    );
+  }
+
+  @override
+  Future<Table> updateTableStatus(String tableId, TableStatus newStatus) async {
+    try {
+      final response = await _apiClient.patch<Map<String, dynamic>>(
+        '$_tablesPath/$tableId/status',
+        data: {'status': newStatus.name},
+      );
+
+      return _tableFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Table> assignOrderToTable(String tableId, String orderId) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '$_tablesPath/$tableId/assign-order',
+        data: {'order_id': orderId},
+      );
+
+      return _tableFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Table> clearTable(String tableId) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '$_tablesPath/$tableId/clear',
+      );
+
+      return _tableFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Zone>> getZones({bool activeOnly = true}) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (activeOnly) queryParams['active_only'] = true;
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _zonesPath,
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _zoneFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Zone> getZoneById(String id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_zonesPath/$id',
+      );
+
+      return _zoneFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Map<String, int>> getTableCountByZone() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_tablesPath/count-by-zone',
+      );
+
+      final data = response.data!['data'] as Map<String, dynamic>;
+      return data.map((key, value) => MapEntry(key, value as int));
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<TableStatistics> getTableStatistics() async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_tablesPath/statistics',
+      );
+
+      return _tableStatisticsFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  // JSON serialization helpers
+  Table _tableFromJson(Map<String, dynamic> json) {
+    return Table(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      capacity: json['capacity'] as int,
+      status: TableStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => TableStatus.available,
+      ),
+      number: json['number'] as int?,
+      zoneId: json['zone_id'] as String?,
+      zoneName: json['zone_name'] as String?,
+      shape: json['shape'] != null
+          ? TableShape.values.firstWhere(
+              (e) => e.name == json['shape'],
+              orElse: () => TableShape.rectangle,
+            )
+          : TableShape.rectangle,
+      position: json['position'] != null
+          ? _tablePositionFromJson(json['position'] as Map<String, dynamic>)
+          : null,
+      currentOrderId: json['current_order_id'] as String?,
+      assignedTo: json['assigned_to'] as String?,
+      isActive: json['is_active'] as bool? ?? true,
+      sortOrder: json['sort_order'] as int? ?? 0,
+    );
+  }
+
+  TablePosition _tablePositionFromJson(Map<String, dynamic> json) {
+    return TablePosition(
+      x: (json['x'] as num).toDouble(),
+      y: (json['y'] as num).toDouble(),
+      width: (json['width'] as num?)?.toDouble() ?? 100,
+      height: (json['height'] as num?)?.toDouble() ?? 100,
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  Zone _zoneFromJson(Map<String, dynamic> json) {
+    return Zone(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      description: json['description'] as String?,
+      color: json['color'] as String?,
+      iconName: json['icon_name'] as String?,
+      isActive: json['is_active'] as bool? ?? true,
+      sortOrder: json['sort_order'] as int? ?? 0,
+      tableCount: json['table_count'] as int? ?? 0,
+    );
+  }
+
+  TableStatistics _tableStatisticsFromJson(Map<String, dynamic> json) {
+    return TableStatistics(
+      totalTables: json['total_tables'] as int,
+      availableTables: json['available_tables'] as int,
+      occupiedTables: json['occupied_tables'] as int,
+      reservedTables: json['reserved_tables'] as int,
+      occupancyRate: (json['occupancy_rate'] as num).toDouble(),
+      averageTurnoverTime: Duration(
+        minutes: json['average_turnover_minutes'] as int? ?? 0,
+      ),
+    );
+  }
 }
 
 /// Mock implementation of TablesRemoteSource for development.

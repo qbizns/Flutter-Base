@@ -52,10 +52,10 @@ class ProductGridCard extends StatelessWidget {
 
                     const SizedBox(height: OdooSpacing.xs),
 
-                    // Category
-                    if (product.category != null)
+                    // SKU or placeholder
+                    if (product.sku != null)
                       Text(
-                        product.category!.name,
+                        'SKU: ${product.sku}',
                         style: OdooTypography.bodySmall.copyWith(
                           color: OdooColors.textSecondary,
                         ),

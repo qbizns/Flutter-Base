@@ -1,6 +1,9 @@
+import 'package:dio/dio.dart';
 import '../../domain/entities/payment.dart';
 import '../../domain/entities/refund.dart';
 import '../../domain/repositories/payments_repository.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/errors/exceptions.dart';
 
 /// Remote data source for payments.
 ///
@@ -35,6 +38,296 @@ abstract class PaymentsRemoteSource {
     DateTime? fromDate,
     DateTime? toDate,
   });
+}
+
+/// HTTP implementation of PaymentsRemoteSource.
+/// Makes actual API calls to the backend.
+class PaymentsRemoteSourceHttp implements PaymentsRemoteSource {
+  PaymentsRemoteSourceHttp({
+    required ApiClient apiClient,
+    required String organizationId,
+  })  : _apiClient = apiClient,
+        _orgId = organizationId;
+
+  final ApiClient _apiClient;
+  final String _orgId;
+
+  String get _paymentsPath => '/organizations/$_orgId/payments';
+  String get _refundsPath => '/organizations/$_orgId/refunds';
+
+  @override
+  Future<Payment> processPayment(Payment payment) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        _paymentsPath,
+        data: _paymentToJson(payment),
+      );
+
+      return _paymentFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Payment> getPaymentById(String id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_paymentsPath/$id',
+      );
+
+      return _paymentFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Payment>> getPaymentsByOrderId(String orderId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _paymentsPath,
+        queryParameters: {'order_id': orderId},
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _paymentFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Payment>> getPayments({
+    PaymentMethod? method,
+    PaymentStatus? status,
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (method != null) queryParams['method'] = method.name;
+      if (status != null) queryParams['status'] = status.name;
+      if (fromDate != null) queryParams['from_date'] = fromDate.toIso8601String();
+      if (toDate != null) queryParams['to_date'] = toDate.toIso8601String();
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _paymentsPath,
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _paymentFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Payment> cancelPayment(String paymentId, String reason) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '$_paymentsPath/$paymentId/cancel',
+        data: {'reason': reason},
+      );
+
+      return _paymentFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Refund> processRefund(Refund refund) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        _refundsPath,
+        data: _refundToJson(refund),
+      );
+
+      return _refundFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Refund> getRefundById(String id) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_refundsPath/$id',
+      );
+
+      return _refundFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Refund>> getRefundsByPaymentId(String paymentId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _refundsPath,
+        queryParameters: {'payment_id': paymentId},
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _refundFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Refund>> getRefundsByOrderId(String orderId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _refundsPath,
+        queryParameters: {'order_id': orderId},
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _refundFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<PaymentStatistics> getPaymentStatistics({
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (fromDate != null) queryParams['from_date'] = fromDate.toIso8601String();
+      if (toDate != null) queryParams['to_date'] = toDate.toIso8601String();
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_paymentsPath/statistics',
+        queryParameters: queryParams,
+      );
+
+      return _paymentStatisticsFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  // JSON serialization helpers
+  Map<String, dynamic> _paymentToJson(Payment payment) {
+    return {
+      if (payment.id.isNotEmpty) 'id': payment.id,
+      'order_id': payment.orderId,
+      'amount': payment.amount,
+      'method': payment.method.name,
+      'status': payment.status.name,
+      'transaction_id': payment.transactionId,
+      'reference_number': payment.referenceNumber,
+      'card_last_four': payment.cardLastFour,
+      'card_brand': payment.cardBrand,
+      'tip_amount': payment.tipAmount,
+      'change_amount': payment.changeAmount,
+      'notes': payment.notes,
+      'metadata': payment.metadata,
+    };
+  }
+
+  Payment _paymentFromJson(Map<String, dynamic> json) {
+    return Payment(
+      id: json['id'] as String,
+      orderId: json['order_id'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      method: PaymentMethod.values.firstWhere(
+        (e) => e.name == json['method'],
+        orElse: () => PaymentMethod.cash,
+      ),
+      status: PaymentStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => PaymentStatus.pending,
+      ),
+      transactionId: json['transaction_id'] as String?,
+      referenceNumber: json['reference_number'] as String?,
+      cardLastFour: json['card_last_four'] as String?,
+      cardBrand: json['card_brand'] as String?,
+      tipAmount: (json['tip_amount'] as num?)?.toDouble() ?? 0,
+      changeAmount: (json['change_amount'] as num?)?.toDouble() ?? 0,
+      notes: json['notes'] as String?,
+      metadata: (json['metadata'] as Map<String, dynamic>?) ?? {},
+      createdAt: DateTime.parse(json['created_at'] as String),
+      processedAt: json['processed_at'] != null
+          ? DateTime.parse(json['processed_at'] as String)
+          : null,
+      failureReason: json['failure_reason'] as String?,
+    );
+  }
+
+  Map<String, dynamic> _refundToJson(Refund refund) {
+    return {
+      if (refund.id.isNotEmpty) 'id': refund.id,
+      'payment_id': refund.paymentId,
+      'order_id': refund.orderId,
+      'amount': refund.amount,
+      'reason': refund.reason.name,
+      'status': refund.status.name,
+      'transaction_id': refund.transactionId,
+      'processed_by': refund.processedBy,
+      'notes': refund.notes,
+    };
+  }
+
+  Refund _refundFromJson(Map<String, dynamic> json) {
+    return Refund(
+      id: json['id'] as String,
+      paymentId: json['payment_id'] as String,
+      orderId: json['order_id'] as String,
+      amount: (json['amount'] as num).toDouble(),
+      reason: RefundReason.values.firstWhere(
+        (e) => e.name == json['reason'],
+        orElse: () => RefundReason.other,
+      ),
+      status: RefundStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => RefundStatus.pending,
+      ),
+      transactionId: json['transaction_id'] as String?,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      processedAt: json['processed_at'] != null
+          ? DateTime.parse(json['processed_at'] as String)
+          : null,
+      processedBy: json['processed_by'] as String?,
+      notes: json['notes'] as String?,
+      failureReason: json['failure_reason'] as String?,
+    );
+  }
+
+  PaymentStatistics _paymentStatisticsFromJson(Map<String, dynamic> json) {
+    final paymentMethodBreakdown = <PaymentMethod, double>{};
+    final breakdownJson = json['payment_method_breakdown'] as Map<String, dynamic>?;
+
+    if (breakdownJson != null) {
+      breakdownJson.forEach((key, value) {
+        final method = PaymentMethod.values.firstWhere(
+          (e) => e.name == key,
+          orElse: () => PaymentMethod.other,
+        );
+        paymentMethodBreakdown[method] = (value as num).toDouble();
+      });
+    }
+
+    return PaymentStatistics(
+      totalPayments: json['total_payments'] as int,
+      successfulPayments: json['successful_payments'] as int,
+      failedPayments: json['failed_payments'] as int,
+      totalAmount: (json['total_amount'] as num).toDouble(),
+      totalRefunded: (json['total_refunded'] as num).toDouble(),
+      totalTips: (json['total_tips'] as num).toDouble(),
+      paymentMethodBreakdown: paymentMethodBreakdown,
+    );
+  }
 }
 
 /// Mock implementation of PaymentsRemoteSource for development.

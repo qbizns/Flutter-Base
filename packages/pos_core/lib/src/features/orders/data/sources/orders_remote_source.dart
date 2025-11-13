@@ -1,7 +1,10 @@
+import 'package:dio/dio.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/order_item.dart';
 import '../../domain/repositories/orders_repository.dart';
 import '../../../products/domain/entities/modifier.dart';
+import '../../../../core/network/api_client.dart';
+import '../../../../core/errors/exceptions.dart';
 
 /// Remote data source for orders.
 ///
@@ -32,6 +35,274 @@ abstract class OrdersRemoteSource {
     DateTime? fromDate,
     DateTime? toDate,
   });
+}
+
+/// HTTP implementation of OrdersRemoteSource.
+/// Makes actual API calls to the backend.
+class OrdersRemoteSourceHttp implements OrdersRemoteSource {
+  OrdersRemoteSourceHttp({
+    required ApiClient apiClient,
+    required String organizationId,
+  })  : _apiClient = apiClient,
+        _orgId = organizationId;
+
+  final ApiClient _apiClient;
+  final String _orgId;
+
+  String get _basePath => '/organizations/$_orgId/orders';
+
+  @override
+  Future<Order> createOrder(Order order) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        _basePath,
+        data: _orderToJson(order),
+      );
+
+      return _orderFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Order> updateOrder(Order order) async {
+    try {
+      final response = await _apiClient.patch<Map<String, dynamic>>(
+        '$_basePath/${order.id}',
+        data: _orderToJson(order),
+      );
+
+      return _orderFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Order> getOrderById(String orderId) async {
+    try {
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_basePath/$orderId',
+      );
+
+      return _orderFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Order>> getOrders({
+    OrderStatus? status,
+    OrderType? type,
+    String? tableId,
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (status != null) queryParams['status'] = status.name;
+      if (type != null) queryParams['type'] = type.name;
+      if (tableId != null) queryParams['table_id'] = tableId;
+      if (fromDate != null) queryParams['from_date'] = fromDate.toIso8601String();
+      if (toDate != null) queryParams['to_date'] = toDate.toIso8601String();
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        _basePath,
+        queryParameters: queryParams,
+      );
+
+      final data = response.data!['data'] as List;
+      return data.map((json) => _orderFromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<List<Order>> getActiveOrders() async {
+    return getOrders(
+      status: OrderStatus.pending,
+    );
+  }
+
+  @override
+  Future<Order> updateOrderStatus(String orderId, OrderStatus newStatus) async {
+    try {
+      final response = await _apiClient.patch<Map<String, dynamic>>(
+        '$_basePath/$orderId/status',
+        data: {'status': newStatus.name},
+      );
+
+      return _orderFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<Order> cancelOrder(String orderId, String reason) async {
+    try {
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '$_basePath/$orderId/cancel',
+        data: {'reason': reason},
+      );
+
+      return _orderFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  @override
+  Future<OrderStatistics> getOrderStatistics({
+    DateTime? fromDate,
+    DateTime? toDate,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+
+      if (fromDate != null) queryParams['from_date'] = fromDate.toIso8601String();
+      if (toDate != null) queryParams['to_date'] = toDate.toIso8601String();
+
+      final response = await _apiClient.get<Map<String, dynamic>>(
+        '$_basePath/statistics',
+        queryParameters: queryParams,
+      );
+
+      return _orderStatisticsFromJson(response.data!);
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  // JSON serialization helpers
+  Map<String, dynamic> _orderToJson(Order order) {
+    return {
+      if (order.id.isNotEmpty) 'id': order.id,
+      'order_number': order.orderNumber,
+      'status': order.status.name,
+      'order_type': order.orderType.name,
+      'items': order.items.map(_orderItemToJson).toList(),
+      'table_id': order.tableId,
+      'table_name': order.tableName,
+      'customer_id': order.customerId,
+      'customer_name': order.customerName,
+      'customer_phone': order.customerPhone,
+      'customer_email': order.customerEmail,
+      'notes': order.notes,
+      'subtotal': order.subtotal,
+      'discount_amount': order.discountAmount,
+      'discount_percent': order.discountPercent,
+      'tax_amount': order.taxAmount,
+      'tax_percent': order.taxPercent,
+      'tip_amount': order.tipAmount,
+      'total': order.total,
+      'payment_method': order.paymentMethod,
+      'payment_status': order.paymentStatus.name,
+    };
+  }
+
+  Map<String, dynamic> _orderItemToJson(OrderItem item) {
+    return {
+      'id': item.id,
+      'product_id': item.productId,
+      'product_name': item.productName,
+      'base_price': item.basePrice,
+      'quantity': item.quantity,
+      'selected_modifiers': item.selectedModifiers.map((m) => {
+        'modifier_id': m.modifierId,
+        'modifier_name': m.modifierName,
+        'price': m.price,
+      }).toList(),
+      'notes': item.notes,
+      'tax_percent': item.taxPercent,
+    };
+  }
+
+  Order _orderFromJson(Map<String, dynamic> json) {
+    return Order(
+      id: json['id'] as String,
+      orderNumber: json['order_number'] as String,
+      status: OrderStatus.values.firstWhere(
+        (e) => e.name == json['status'],
+        orElse: () => OrderStatus.pending,
+      ),
+      orderType: OrderType.values.firstWhere(
+        (e) => e.name == json['order_type'],
+        orElse: () => OrderType.dineIn,
+      ),
+      items: (json['items'] as List?)
+          ?.map((item) => _orderItemFromJson(item as Map<String, dynamic>))
+          .toList() ?? [],
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,
+      completedAt: json['completed_at'] != null
+          ? DateTime.parse(json['completed_at'] as String)
+          : null,
+      tableId: json['table_id'] as String?,
+      tableName: json['table_name'] as String?,
+      customerId: json['customer_id'] as String?,
+      customerName: json['customer_name'] as String?,
+      customerPhone: json['customer_phone'] as String?,
+      customerEmail: json['customer_email'] as String?,
+      notes: json['notes'] as String?,
+      subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
+      discountAmount: (json['discount_amount'] as num?)?.toDouble() ?? 0,
+      discountPercent: (json['discount_percent'] as num?)?.toDouble() ?? 0,
+      taxAmount: (json['tax_amount'] as num?)?.toDouble() ?? 0,
+      taxPercent: (json['tax_percent'] as num?)?.toDouble() ?? 0,
+      tipAmount: (json['tip_amount'] as num?)?.toDouble() ?? 0,
+      total: (json['total'] as num?)?.toDouble() ?? 0,
+      paidAmount: (json['paid_amount'] as num?)?.toDouble() ?? 0,
+      changeAmount: (json['change_amount'] as num?)?.toDouble() ?? 0,
+      paymentMethod: json['payment_method'] as String?,
+      paymentStatus: json['payment_status'] != null
+          ? PaymentStatus.values.firstWhere(
+              (e) => e.name == json['payment_status'],
+              orElse: () => PaymentStatus.pending,
+            )
+          : PaymentStatus.pending,
+      userName: json['user_name'] as String?,
+    );
+  }
+
+  OrderItem _orderItemFromJson(Map<String, dynamic> json) {
+    return OrderItem(
+      id: json['id'] as String,
+      productId: json['product_id'] as String,
+      productName: json['product_name'] as String,
+      basePrice: (json['base_price'] as num).toDouble(),
+      quantity: json['quantity'] as int,
+      selectedModifiers: (json['selected_modifiers'] as List?)
+          ?.map((m) => SelectedModifier(
+                modifierId: m['modifier_id'] as String,
+                modifierName: m['modifier_name'] as String,
+                price: (m['price'] as num).toDouble(),
+              ))
+          .toList() ?? [],
+      notes: json['notes'] as String?,
+      taxPercent: (json['tax_percent'] as num?)?.toDouble() ?? 0,
+    );
+  }
+
+  OrderStatistics _orderStatisticsFromJson(Map<String, dynamic> json) {
+    return OrderStatistics(
+      totalOrders: json['total_orders'] as int,
+      completedOrders: json['completed_orders'] as int,
+      cancelledOrders: json['cancelled_orders'] as int,
+      activeOrders: json['active_orders'] as int,
+      totalRevenue: (json['total_revenue'] as num).toDouble(),
+      averageOrderValue: (json['average_order_value'] as num).toDouble(),
+      averagePreparationTime: Duration(
+        minutes: json['average_preparation_minutes'] as int? ?? 0,
+      ),
+    );
+  }
 }
 
 /// Mock implementation of OrdersRemoteSource for development.

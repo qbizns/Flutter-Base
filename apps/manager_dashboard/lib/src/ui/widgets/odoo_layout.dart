@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/odoo_colors.dart';
 import '../theme/odoo_typography.dart';
+import '../providers/notifications_provider.dart';
+import 'notifications_panel.dart';
+import 'search_overlay.dart';
 
 /// Odoo Layout Widget
 ///
@@ -10,7 +14,7 @@ import '../theme/odoo_typography.dart';
 /// - Top bar with search, notifications, user menu
 /// - Main content area with breadcrumbs
 /// - Responsive design (collapses on mobile)
-class OdooLayout extends StatefulWidget {
+class OdooLayout extends ConsumerStatefulWidget {
   const OdooLayout({
     required this.child,
     super.key,
@@ -19,10 +23,10 @@ class OdooLayout extends StatefulWidget {
   final Widget child;
 
   @override
-  State<OdooLayout> createState() => _OdooLayoutState();
+  ConsumerState<OdooLayout> createState() => _OdooLayoutState();
 }
 
-class _OdooLayoutState extends State<OdooLayout> {
+class _OdooLayoutState extends ConsumerState<OdooLayout> {
   bool _isSidebarCollapsed = false;
 
   @override
@@ -357,7 +361,7 @@ class _OdooSidebar extends StatelessWidget {
 }
 
 /// Odoo Top Bar
-class _OdooTopBar extends StatelessWidget {
+class _OdooTopBar extends ConsumerWidget {
   const _OdooTopBar({
     required this.onMenuPressed,
   });
@@ -365,7 +369,8 @@ class _OdooTopBar extends StatelessWidget {
   final VoidCallback onMenuPressed;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
     return Container(
       height: OdooSpacing.topBarHeight,
       decoration: const BoxDecoration(
@@ -395,10 +400,7 @@ class _OdooTopBar extends StatelessWidget {
           // Search
           IconButton(
             onPressed: () {
-              // TODO: Implement search
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Search feature coming soon')),
-              );
+              SearchOverlay.show(context);
             },
             icon: const Icon(Icons.search),
             tooltip: 'Search',
@@ -407,20 +409,7 @@ class _OdooTopBar extends StatelessWidget {
           const SizedBox(width: OdooSpacing.sm),
 
           // Notifications
-          IconButton(
-            onPressed: () {
-              // TODO: Implement notifications
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text('Notifications feature coming soon')),
-              );
-            },
-            icon: Badge(
-              label: const Text('3'),
-              child: const Icon(Icons.notifications_outlined),
-            ),
-            tooltip: 'Notifications',
-          ),
+          _NotificationsButton(unreadCount: unreadCount),
 
           const SizedBox(width: OdooSpacing.sm),
 
@@ -464,10 +453,7 @@ class _OdooTopBar extends StatelessWidget {
               ),
             ],
             onSelected: (value) {
-              // TODO: Handle menu actions
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$value action coming soon')),
-              );
+              _handleUserMenuAction(context, value.toString());
             },
           ),
         ],
@@ -497,5 +483,148 @@ class _OdooTopBar extends StatelessWidget {
         }
         return 'Dashboard';
     }
+  }
+
+  void _handleUserMenuAction(BuildContext context, String action) {
+    switch (action) {
+      case 'profile':
+        // Show profile dialog or navigate to profile page
+        _showProfileDialog(context);
+        break;
+      case 'settings':
+        // Navigate to settings
+        context.go('/settings');
+        break;
+      case 'logout':
+        // Show logout confirmation dialog
+        _showLogoutDialog(context);
+        break;
+    }
+  }
+
+  void _showProfileDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Profile'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: OdooColors.primary,
+              radius: 40,
+              child: Icon(
+                Icons.person,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+            SizedBox(height: OdooSpacing.lg),
+            Text(
+              'Manager',
+              style: OdooTypography.titleMedium,
+            ),
+            SizedBox(height: OdooSpacing.xs),
+            Text(
+              'manager@smartpos.com',
+              style: OdooTypography.bodyMedium,
+            ),
+            SizedBox(height: OdooSpacing.md),
+            Text(
+              'Role: Administrator',
+              style: OdooTypography.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Navigate to profile settings or edit page
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Edit profile feature coming soon'),
+                ),
+              );
+            },
+            child: const Text('Edit Profile'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text(
+          'Are you sure you want to logout?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // TODO: Implement actual logout logic
+              // Clear session, navigate to login, etc.
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Logged out successfully'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: OdooColors.danger,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Notifications Button Widget with Dropdown Panel
+class _NotificationsButton extends StatelessWidget {
+  const _NotificationsButton({
+    required this.unreadCount,
+  });
+
+  final int unreadCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton(
+      icon: Badge(
+        label: Text('$unreadCount'),
+        isLabelVisible: unreadCount > 0,
+        child: const Icon(Icons.notifications_outlined),
+      ),
+      tooltip: 'Notifications',
+      offset: const Offset(0, 50),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(OdooSpacing.radiusLarge),
+      ),
+      // Disable default padding
+      padding: EdgeInsets.zero,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          child: const NotificationsPanel(),
+        ),
+      ],
+    );
   }
 }
