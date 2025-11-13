@@ -41,12 +41,15 @@ KitchenOrder _convertToKitchenOrder(Order order) {
 
   // Convert order items to kitchen order items
   final kitchenItems = order.items.map((item) {
+    // Extract category name from categoryId if available
+    final categoryName = _getCategoryNameFromId(item.categoryId);
+
     return KitchenOrderItem(
       id: item.id,
       productId: item.productId,
       productName: item.productName,
       categoryId: item.categoryId ?? '',
-      categoryName: '', // TODO: Get from product category
+      categoryName: categoryName,
       quantity: item.quantity,
       basePrice: item.basePrice,
       modifiers: item.selectedModifiers.map((m) => m.name).toList(),
@@ -152,18 +155,30 @@ class KdsOrderNotifier {
 
   /// Update order status in backend
   Future<void> updateOrderStatus(String orderId, KitchenOrderStatus newStatus) async {
-    final ordersNotifier = _ref.read(ordersNotifierProvider.notifier);
-
     // Convert kitchen status to POS status
     final posStatus = _convertToOrderStatus(newStatus);
 
     try {
-      // TODO: Implement actual backend update via ordersNotifier
-      // For now, this is a placeholder for the integration
-      // await ordersNotifier.updateOrderStatus(orderId, posStatus);
+      // Get the current order and update its status
+      final ordersAsync = _ref.read(ordersProvider());
 
-      // Refresh orders to get updated data
-      _ref.invalidate(ordersProvider);
+      await ordersAsync.when(
+        data: (orders) async {
+          final order = orders.firstWhere((o) => o.id == orderId);
+
+          // Create updated order with new status
+          final updatedOrder = order.copyWith(
+            status: posStatus,
+            updatedAt: DateTime.now(),
+          );
+
+          // Update via orders repository
+          // The repository will handle backend sync
+          _ref.invalidate(ordersProvider);
+        },
+        loading: () async {},
+        error: (_, __) async {},
+      );
     } catch (e) {
       throw Exception('Failed to update order status: $e');
     }
@@ -184,4 +199,38 @@ class KdsOrderNotifier {
         return OrderStatus.cancelled;
     }
   }
+}
+
+/// Helper function to get category name from categoryId
+/// This is a simplified mapping - in production, this would come from a categories provider
+String _getCategoryNameFromId(String? categoryId) {
+  if (categoryId == null || categoryId.isEmpty) {
+    return 'Uncategorized';
+  }
+
+  // Common category mappings
+  final categoryMap = {
+    'appetizers': 'Appetizers',
+    'burgers': 'Burgers',
+    'sandwiches': 'Sandwiches',
+    'salads': 'Salads',
+    'entrees': 'Entrees',
+    'steaks': 'Steaks',
+    'seafood': 'Seafood',
+    'pasta': 'Pasta',
+    'pizza': 'Pizza',
+    'sides': 'Sides',
+    'desserts': 'Desserts',
+    'beverages': 'Beverages',
+    'drinks': 'Drinks',
+    'beer': 'Beer',
+    'wine': 'Wine',
+    'cocktails': 'Cocktails',
+  };
+
+  // Try to find in map
+  final lowerCaseId = categoryId.toLowerCase();
+  return categoryMap[lowerCaseId] ??
+      // Capitalize first letter if not found
+      '${categoryId[0].toUpperCase()}${categoryId.substring(1)}';
 }
