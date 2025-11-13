@@ -361,6 +361,179 @@ Content-Disposition: attachment; filename="Z-Report-2025-11-13-001.pdf"
 
 ---
 
+## PRIORITY 2.5: OFFLINE-FIRST DATA LOADING (Session Start)
+
+### Overview
+
+Following Odoo POS pattern: load all master data at session open for offline operation.
+All endpoints should support bulk fetch with pagination and filtering.
+
+---
+
+#### 1. Products Endpoint (Bulk Load)
+```http
+GET /api/v1/organizations/{org_id}/products?include=variants,modifiers,categories&status=active&limit=1000
+Authorization: Bearer {jwt_token}
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "product-uuid",
+      "sku": "PROD-001",
+      "name": "Espresso",
+      "description": "Double shot espresso",
+      "base_price": 3.50,
+      "sale_price": null,
+      "cost": 0.75,
+      "tax_percent": 8.5,
+      "tax_ids": ["tax-uuid"],
+      "category_id": "category-uuid",
+      "category_name": "Beverages",
+      "image_url": "https://...",
+      "thumbnail_url": "https://...",
+      "stock_quantity": 100,
+      "track_inventory": true,
+      "is_active": true,
+      "is_featured": false,
+      "variants": [],
+      "modifiers": [],
+      "created_at": "2025-11-13T08:00:00Z",
+      "updated_at": "2025-11-13T08:00:00Z"
+    }
+  ],
+  "total": 250,
+  "limit": 1000,
+  "offset": 0
+}
+```
+
+**Enhancement Needed:**
+- Support `include` parameter for nested data
+- Return all active products in single request (1000+ limit)
+- Include variants and modifiers inline
+- Optimize query performance for bulk fetch
+
+---
+
+#### 2. Categories Endpoint (Bulk Load)
+```http
+GET /api/v1/organizations/{org_id}/categories?status=active&limit=500
+Authorization: Bearer {jwt_token}
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "category-uuid",
+      "name": "Beverages",
+      "description": "Hot and cold drinks",
+      "image_url": "https://...",
+      "parent_id": null,
+      "sort_order": 1,
+      "is_active": true,
+      "created_at": "2025-11-13T08:00:00Z"
+    }
+  ],
+  "total": 25,
+  "limit": 500,
+  "offset": 0
+}
+```
+
+---
+
+#### 3. Customers Endpoint (Bulk Load)
+```http
+GET /api/v1/organizations/{org_id}/customers?status=active&limit=1000
+Authorization: Bearer {jwt_token}
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "customer-uuid",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "phone": "+1234567890",
+      "loyalty_points": 250.0,
+      "loyalty_tier": "gold",
+      "created_at": "2025-11-13T08:00:00Z"
+    }
+  ],
+  "total": 500,
+  "limit": 1000,
+  "offset": 0
+}
+```
+
+---
+
+#### 4. Payment Methods Endpoint
+```http
+GET /api/v1/organizations/{org_id}/payment-methods?status=active
+Authorization: Bearer {jwt_token}
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "payment-method-uuid",
+      "name": "Cash",
+      "type": "cash",
+      "icon_name": "attach_money",
+      "is_active": true,
+      "requires_authorization": false,
+      "created_at": "2025-11-13T08:00:00Z"
+    },
+    {
+      "id": "payment-method-uuid-2",
+      "name": "Credit Card",
+      "type": "card",
+      "icon_name": "credit_card",
+      "is_active": true,
+      "requires_authorization": true,
+      "created_at": "2025-11-13T08:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+#### 5. Tax Rates Endpoint
+```http
+GET /api/v1/organizations/{org_id}/tax-rates?status=active
+Authorization: Bearer {jwt_token}
+
+Response: 200 OK
+{
+  "items": [
+    {
+      "id": "tax-rate-uuid",
+      "name": "Sales Tax",
+      "rate": 8.5,
+      "type": "percentage",
+      "is_active": true,
+      "is_default": true,
+      "created_at": "2025-11-13T08:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+**Implementation Requirements:**
+- All endpoints must support bulk fetching (high limits)
+- Optimize queries for performance (indexes on status, org_id)
+- Support `include` parameter for nested data loading
+- Return consistent pagination metadata
+- Support `updated_at` filtering for incremental sync
+- Add caching headers (ETag, Last-Modified)
+
+---
+
 ## PRIORITY 3: ORDER MANAGEMENT (Nested Creation)
 
 ### Module: `/backend/internal/order/`

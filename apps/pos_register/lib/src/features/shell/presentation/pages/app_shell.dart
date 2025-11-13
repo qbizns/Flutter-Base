@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/offline_banner.dart';
 
 /// Main app shell with bottom navigation
 class AppShell extends StatelessWidget {
@@ -13,7 +14,15 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
+      body: Column(
+        children: [
+          // Offline banner (shown only when offline)
+          const OfflineBanner(),
+
+          // Main content
+          Expanded(child: navigationShell),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) {
