@@ -7,6 +7,8 @@ import 'package:pos_ui/pos_ui.dart';
 import '../../../session/presentation/widgets/session_status_bar.dart';
 import '../../../session/presentation/widgets/session_guard.dart';
 import '../../../sync/presentation/widgets/sync_status_indicator.dart';
+import '../../../settings/providers/tax_settings_provider.dart';
+import '../../../data/providers/hardware_providers.dart';
 import '../widgets/vodo_product_grid.dart';
 import '../widgets/product_search_bar.dart';
 import '../widgets/vodo_cart_panel.dart';
@@ -188,6 +190,9 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       }
     }
 
+    // Get tax settings
+    final taxSettings = ref.read(taxSettingsNotifierProvider);
+
     // Create order item
     final orderItem = OrderItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -199,7 +204,7 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
       productImageUrl: product.imageUrl,
       categoryId: product.categoryId,
       selectedModifiers: selectedModifiers ?? [],
-      taxPercent: 8.5, // TODO: Get from settings
+      taxPercent: taxSettings.defaultTaxPercent,
     );
 
     // Add to cart
@@ -252,16 +257,58 @@ class _MainPosPageState extends ConsumerState<MainPosPage> {
     );
   }
 
-  void _handleBarcodeScan() {
-    // TODO: Implement barcode scanning with Device Bridge (Day 4-5)
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Barcode scanning will be implemented in Day 4-5'),
-          duration: Duration(seconds: 2),
-        ),
+  void _handleBarcodeScan() async {
+    // Listen to barcode scanner stream
+    ref.listen(barcodeScannerStreamProvider, (previous, next) {
+      next.when(
+        data: (barcode) => _onBarcodeScanned(barcode),
+        loading: () {},
+        error: (error, _) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Barcode scanner error: $error'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
       );
+    });
+  }
+
+  Future<void> _onBarcodeScanned(String barcode) async {
+    // Get all products
+    final productsAsync = ref.read(productsProvider());
+
+    final products = productsAsync.when(
+      data: (products) => products,
+      loading: () => <Product>[],
+      error: (_, __) => <Product>[],
+    );
+
+    // Find product by barcode
+    final product = products.where((p) => p.barcode == barcode).firstOrNull;
+
+    if (product == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Product not found for barcode: $barcode'),
+            backgroundColor: Colors.orange,
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+      return;
     }
+
+    // Add product to cart
+    await _addToCart(product);
   }
 
   Future<void> _showCustomerSelect(BuildContext context) async {

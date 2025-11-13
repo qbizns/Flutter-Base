@@ -11,6 +11,7 @@ import '../../../data/services/sync_service.dart';
 import '../../../data/providers/hardware_providers.dart';
 import '../widgets/vodo_payment_grid.dart';
 import '../widgets/cash_payment_dialog.dart';
+import '../widgets/card_payment_dialog.dart';
 
 /// Payment page for processing order payment
 class PaymentPage extends ConsumerStatefulWidget {
@@ -455,16 +456,11 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
         break;
 
       case 'card':
-        // TODO: Implement card payment with Device Bridge
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Card payment with Device Bridge coming in next commit'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-        return;
+        amount = await CardPaymentDialog.show(
+          context,
+          totalAmount: _remainingAmount,
+        );
+        break;
 
       default:
         if (mounted) {
