@@ -1745,6 +1745,345 @@ pos:
 
 ---
 
-**Last Updated:** 2025-11-13
+## PRIORITY 3: WAITER APP REAL-TIME SYNC (Phase 3)
+
+### Module: WebSocket Multi-Device Coordination
+
+**STATUS:** ❌ Not implemented
+**REQUIRED FOR:** Waiter app offline-first order management
+**URGENCY:** High (Phase 3, Week 5)
+
+### WebSocket Endpoint
+
+```
+WS /pos/ws
+Query Parameters:
+  - device_id: string (required) - Unique device identifier (e.g., "WAITER-001")
+  - org_id: string (optional) - Organization UUID
+```
+
+### Event Types (Client → Server)
+
+#### 1. Subscribe to POS Updates
+```json
+{
+  "type": "subscribe",
+  "channel": "pos_updates",
+  "device_id": "WAITER-001",
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 2. Update Table Status
+```json
+{
+  "type": "table.update_status",
+  "device_id": "WAITER-001",
+  "data": {
+    "table_id": "table-uuid",
+    "status": "occupied",
+    "updated_at": "2025-11-13T10:30:00Z"
+  }
+}
+```
+
+#### 3. Notify Order Created
+```json
+{
+  "type": "order.created",
+  "device_id": "WAITER-001",
+  "data": {
+    "id": "order-uuid",
+    "table_id": "table-uuid",
+    "table_name": "T5",
+    "status": "pending",
+    "items": [...],
+    "subtotal": 45.50,
+    "tax": 4.55,
+    "total": 50.05,
+    "created_at": "2025-11-13T10:30:00Z"
+  }
+}
+```
+
+#### 4. Ping (Keepalive)
+```json
+{
+  "type": "ping",
+  "device_id": "WAITER-001",
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+### Event Types (Server → Client)
+
+#### 1. Table Status Changed
+```json
+{
+  "type": "table.status_changed",
+  "data": {
+    "table_id": "table-uuid",
+    "status": "available",
+    "order_id": null,
+    "guest_count": null
+  },
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 2. Order Created (from another device)
+```json
+{
+  "type": "order.created",
+  "data": {
+    "id": "order-uuid",
+    "table_id": "table-uuid",
+    "status": "pending",
+    "items": [...],
+    "total": 50.05
+  },
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 3. Order Updated
+```json
+{
+  "type": "order.updated",
+  "data": {
+    "id": "order-uuid",
+    "status": "preparing",
+    "items": [...]
+  },
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 4. Order Status Changed
+```json
+{
+  "type": "order.status_changed",
+  "data": {
+    "id": "order-uuid",
+    "status": "ready",
+    "updated_at": "2025-11-13T10:30:00Z"
+  },
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 5. Order Cancelled
+```json
+{
+  "type": "order.cancelled",
+  "data": {
+    "id": "order-uuid",
+    "cancelled_at": "2025-11-13T10:30:00Z"
+  },
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 6. Session Closed
+```json
+{
+  "type": "session.closed",
+  "data": {
+    "session_id": "session-uuid",
+    "closed_by": "manager-uuid"
+  },
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+#### 7. Ping Response
+```json
+{
+  "type": "ping",
+  "timestamp": "2025-11-13T10:30:00Z"
+}
+```
+
+### REST API Endpoints for Offline Sync
+
+#### 1. Sync Pending Orders
+```http
+POST /api/v1/organizations/{org_id}/orders/sync
+Authorization: Bearer {jwt_token}
+
+Request:
+{
+  "device_id": "WAITER-001",
+  "operations": [
+    {
+      "operation": "create",
+      "order": {
+        "id": "local-order-123",
+        "table_id": "table-uuid",
+        "items": [...],
+        "created_at": "2025-11-13T10:30:00Z"
+      }
+    },
+    {
+      "operation": "update",
+      "order_id": "order-uuid",
+      "updates": {
+        "status": "confirmed",
+        "updated_at": "2025-11-13T10:35:00Z"
+      }
+    }
+  ]
+}
+
+Response: 200 OK
+{
+  "success": true,
+  "synced_operations": 2,
+  "conflicts": [],
+  "timestamp": "2025-11-13T10:36:00Z"
+}
+```
+
+#### 2. Get Orders Since Timestamp
+```http
+GET /api/v1/organizations/{org_id}/orders/since/{timestamp}
+Authorization: Bearer {jwt_token}
+Query Parameters:
+  - device_id: string
+  - timestamp: ISO8601 datetime
+
+Response: 200 OK
+{
+  "orders": [
+    {
+      "id": "order-uuid",
+      "status": "preparing",
+      "updated_at": "2025-11-13T10:35:00Z"
+    }
+  ],
+  "tables": [
+    {
+      "id": "table-uuid",
+      "status": "occupied",
+      "current_order_id": "order-uuid",
+      "updated_at": "2025-11-13T10:35:00Z"
+    }
+  ],
+  "timestamp": "2025-11-13T10:36:00Z"
+}
+```
+
+#### 3. Resolve Order Conflict
+```http
+POST /api/v1/organizations/{org_id}/orders/{order_id}/resolve-conflict
+Authorization: Bearer {jwt_token}
+
+Request:
+{
+  "device_id": "WAITER-001",
+  "local_version": {
+    "items": [...],
+    "updated_at": "2025-11-13T10:30:00Z"
+  },
+  "strategy": "server_wins" | "local_wins" | "merge"
+}
+
+Response: 200 OK
+{
+  "order": {
+    "id": "order-uuid",
+    "items": [...],
+    "updated_at": "2025-11-13T10:36:00Z"
+  }
+}
+```
+
+### Database Tables (Already Exist)
+
+- `pos_orders` - Order storage
+- `pos_order_items` - Order items
+- `pos_order_item_modifiers` - Item modifiers
+- `restaurant_tables` - Table status
+- `pos_sessions` - Session tracking
+
+### Implementation Requirements
+
+1. **WebSocket Server** (6 hours)
+   - Implement WebSocket handler with gorilla/websocket
+   - Device connection management
+   - Message routing to subscribed clients
+   - Ping/pong keepalive (30s interval)
+   - Auto-reconnect handling
+   - Connection status tracking
+
+2. **Event Broadcasting** (4 hours)
+   - Pub/sub pattern for multi-device sync
+   - Redis or in-memory event bus
+   - Message filtering by organization
+   - Device-specific message routing
+
+3. **Offline Sync Endpoints** (4 hours)
+   - Batch operation processing
+   - Conflict detection and resolution
+   - Timestamp-based delta sync
+   - Transaction rollback on failure
+
+4. **Testing** (2 hours)
+   - WebSocket connection tests
+   - Multi-device simulation
+   - Offline/online transition tests
+   - Conflict resolution tests
+
+**Total Effort:** 16 hours
+**Priority:** P1 (Required for Phase 3)
+
+---
+
+### Phase 3 Frontend Requirements Met
+
+**Waiter App - Offline-First Order Management** ✅
+
+Files created:
+1. `apps/waiter_app/lib/src/core/config/waiter_config.dart`
+   - Environment-based configuration
+   - WebSocket URL management
+   - Reconnect and ping settings
+
+2. `apps/waiter_app/lib/src/data/services/waiter_realtime_service.dart`
+   - WebSocket service with auto-reconnect
+   - Event handling for all message types
+   - Connection status management
+   - Ping/pong keepalive
+
+3. `apps/waiter_app/lib/src/data/providers/tables_realtime_provider.dart`
+   - Real-time table state management
+   - Optimistic UI updates
+   - WebSocket integration
+   - Convenience providers
+
+4. `apps/waiter_app/lib/src/data/database/waiter_local_database.dart`
+   - Drift local database
+   - LocalOrders, SyncQueue, OrderModifications tables
+   - CRUD operations
+   - Automatic cleanup
+
+5. `apps/waiter_app/lib/src/data/services/waiter_offline_order_service.dart`
+   - Offline-first order management
+   - Sync queue with priorities
+   - Conflict resolution strategy
+   - Background sync every 30s
+
+6. `apps/waiter_app/lib/src/features/order/presentation/pages/order_taking_page.dart`
+   - Enhanced order taking UI
+   - Local cart management
+   - Order notes field
+   - Guest count tracking
+   - Offline-first integration
+
+**Ready for backend integration when WebSocket server is implemented.**
+
+---
+
+**Last Updated:** 2025-11-13 (Phase 3, Day 1-2 complete)
 **Maintained By:** Frontend Development Team
 **Questions:** Contact backend team lead
