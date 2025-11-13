@@ -35,6 +35,7 @@ class _SalesPageState extends ConsumerState<SalesPage> {
   DateTime? _startDate;
   DateTime? _endDate;
 
+  bool _isLoading = false;
   @override
   void dispose() {
     _searchController.dispose();
