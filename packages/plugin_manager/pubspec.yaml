@@ -1,0 +1,47 @@
+name: plugin_manager
+description: Plugin marketplace and management system for Flutter-Base POS
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Networking
+  dio: ^5.4.0
+  http: ^1.1.0
+
+  # State Management
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # JSON Serialization
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+
+  # Storage
+  shared_preferences: ^2.2.2
+
+  # Utilities
+  logger: ^2.0.2+1
+  uuid: ^4.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Code Generation
+  build_runner: ^2.4.7
+  freezed: ^2.4.6
+  json_serializable: ^6.7.1
+  riverpod_generator: ^2.3.9
+
+  # Linting
+  flutter_lints: ^3.0.1
+
+  # Testing
+  mocktail: ^1.0.2
